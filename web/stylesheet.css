@@ -1,0 +1,31 @@
+
+h1 {
+    text-align: center;
+    width: 90%;
+    background-color: #b8e2f4;
+    margin: auto;
+    margin-bottom: 10px;
+}
+
+table {
+    width: 90%;
+    margin: auto;
+    border-collapse:collapse;
+}
+
+table td {
+    padding: 3px;
+    text-align: center;
+}
+
+table tr.header td {
+    background-color: #d4d4d4;
+}
+
+table tr.ok td {
+    background-color: #d9ffc5;
+}
+
+table tr.nok td {
+    background-color: #ffa879;
+}
