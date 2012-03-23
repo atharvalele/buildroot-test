@@ -62,12 +62,14 @@ echo "</table>\n";
 
 echo "<p style=\"text-align: center;\">";
 
+$total = bab_total_results_count();
+
 if ($start != 0)
   echo "<a href=\"?start=" . ($start - $step) . "\">Previous results</a>&nbsp;-&nbsp;";
 
-echo "(" . $start . " - " . ($start + $step) . ")&nbsp;-&nbsp;";
+echo "(" . $start . " - " . ($start + $step) . " / " . $total . " results)&nbsp;-&nbsp;";
 
-if (($start + $step) < bab_total_results_count())
+if (($start + $step) < $total)
   echo "<a href=\"?start=" . ($start + $step) . "\">Next results</a>";
 
 echo "</p>";
