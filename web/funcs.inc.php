@@ -14,44 +14,27 @@ function bab_total_results_count()
 }
 
 /*
- * Returns an array containing build results.
+ * Internal function, which, given a list of build ids (SHA1), creates
+ * an array with one entry per build, containing various informations
+ * about this build result.
  */
-function bab_get_results($start=0, $count=100)
+function _bab_build_result_array($buildidlist)
 {
   global $buildresultdir;
 
-  /*
-   * So, we list all files, order by ctime (-tc) and show all details
-   * (-l) and format the date with good format (full-iso).
-   *
-   * Then we filter the first line that gives the total number of
-   * files (which start by total) and we filter the tmp directory
-   * which is used to temporarly store build results while they are
-   * being uploaded and verified.
-   *
-   * Finally, with tail and head we select only the ones that are of
-   * interest.
-   *
-   * And with sed, we replace multiple spaces by single spaces so that
-   * the PHP explode() function works well on this
-   */
-
-  exec("ls -ltc --time-style=full-iso ${buildresultdir} | grep -v ^total | grep -v tmp | tail -n +${start} | head -${count} | sed 's/ \+/ /g'",
-       $rawresults);
-
   $results = array();
 
-  for ($i = 0; $i < count($rawresults); $i++)
+  for ($i = 0; $i < count($buildidlist); $i++)
     {
       /* Split up the informations */
-      $buildinfo = explode(" ", $rawresults[$i]);
+      $buildinfo = explode(" ", $buildidlist[$i]);
       $buildid = $buildinfo[8];
       $builddate = $buildinfo[5] . " " . substr($buildinfo[6], 0, 8);
       $thisdir = $buildresultdir . $buildid;
 
       $status = trim(file_get_contents($thisdir . "/status"));
-      $gitid = file_get_contents($thisdir . "/gitid");
-      $submitter = file_get_contents($thisdir . "/submitter");
+      $gitid = trim(file_get_contents($thisdir . "/gitid"));
+      $submitter = trim(file_get_contents($thisdir . "/submitter"));
 
       /* Get the architecture from the configuration file */
       $archarray = array();
@@ -83,6 +66,47 @@ function bab_get_results($start=0, $count=100)
     }
 
   return $results;
+}
+
+/*
+ * Returns an array containing the build results starting from $start,
+ * and limited to $count items. The items starting with $start=0 are
+ * the most recent build results.
+ */
+function bab_get_results($start=0, $count=100)
+{
+  global $buildresultdir;
+
+  /*
+   * So, we list all files, order by ctime (-tc) and show all details
+   * (-l) and format the date with good format (full-iso).
+   *
+   * Then we filter the first line that gives the total number of
+   * files (which start by total) and we filter the tmp directory
+   * which is used to temporarly store build results while they are
+   * being uploaded and verified.
+   *
+   * Finally, with tail and head we select only the ones that are of
+   * interest.
+   *
+   * And with sed, we replace multiple spaces by single spaces so that
+   * the PHP explode() function works well on this
+   */
+
+  exec("ls -ltc --time-style=full-iso ${buildresultdir} | grep -v ^total | grep -v tmp | tail -n +${start} | head -${count} | sed 's/ \+/ /g'",
+       $buildidlist);
+
+  return _bab_build_result_array($buildidlist);
+}
+
+function bab_get_last_day_results()
+{
+  global $buildresultdir;
+
+  exec("(cd ${buildresultdir} ; ls -dltcr --time-style=full-iso \$(find . -type d -daystart -ctime 1 | sed 's,^\./,,' | tr '\\n' ' '))",
+       $buildidlist);
+
+  return _bab_build_result_array($buildidlist);
 }
 
 ?>
