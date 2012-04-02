@@ -38,7 +38,7 @@ for ($i = 0; $i < count($results); $i++)
   {
     $current = $results[$i];
     echo " <item rdf:about=\"http://buildroot.humanoidz.org/results/" . $current['id'] . "\">\n";
-    echo "  <title>Build " . ($status == "OK" ? "successful" : "failed") . " at " . $current['date'] . "</title>\n";
+    echo "  <title>Build " . ($current['status'] == "OK" ? "successful" : "failed") . " at " . $current['date'] . "</title>\n";
     echo "  <link>http://buildroot.humanoidz.org/results/" . $current['id'] . "</link>\n";
     echo "  <description>\n";
     if ($current['status'] == "OK") {
