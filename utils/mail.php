@@ -26,15 +26,17 @@ $contents = "Hello,\n\n";
 $contents .= "On " . $buildsdate . ", " . count($results) . " random build tests have been done and\nsubmitted on autobuild.buildroot.net.\n";
 $contents .= " " . $success . " builds have been successful\n";
 $contents .= " " . $failed  . " builds have failed\n\n";
+$contents .= "Below the results of the failed builds. Successful builds are omitted.\n\n";
 
 for ($i = 0; $i < count($results); $i++)
   {
     $b = $results[$i];
+    if ($b['status'] == "OK")
+      continue;
     $contents .= "Build ". $b['id'] . "\n";
     $contents .= "==============================================\n\n";
     $contents .= "Status         : " . $b['status'] . "\n";
-    if ($b['status'] != "OK")
-      $contents .= "Failure reason : " . $b['reason'] . "\n";
+    $contents .= "Failure reason : " . $b['reason'] . "\n";
     $contents .= "Architecture   : " . $b['arch'] . "\n";
     $contents .= "Submitted by   : " . $b['submitter'] . "\n";
     $contents .= "Submitted at   : " . $b['date'] . "\n";
