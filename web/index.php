@@ -77,7 +77,7 @@ echo "</p>";
 ?>
 
 <p style="width: 90%; margin: auto; text-align: center; font-size: 60%; border-top: 1px solid black; padding-top: 5px;">
-  <a href="http://buildroot.org">About Buildroot</a>&nbsp;-&nbsp;<a href="rss.php">RSS feed of build results</a>
+  <a href="http://buildroot.org">About Buildroot</a>&nbsp;-&nbsp;<a href="rss.php">RSS feed of build results</a>&nbsp;-&nbsp;<a href="http://git.buildroot.net/buildroot-test/plain/utils/br-reproduce-build">Script to reproduce a build</a>
 </p>
 
   </body>
