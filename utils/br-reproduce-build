@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# A directory that contains an existing Git repository of
+# Buildroot. The script will git clone from it instead of git cloning
+# from the official repo, in order to reduce the clone time.
+BASE_GIT=/home/test/buildroot/
+
+# Location where the output directories will be created. One
+# subdirectory, named after the build ID will be created for each
+# build.
+OUTPUT_DIR=/home/test/outputs/
+
+if [ $# -ne 1 ] ; then
+    echo "Usage: $0 buildid" ;
+    echo "  buildid is the SHA1 of the build result, as found on http://autobuild.buildroot.net"
+    exit 1 ;
+fi
+
+BUILD_ID=$1
+
+BUILD_DIR=${OUTPUT_DIR}/${BUILD_ID}
+
+mkdir -p ${BUILD_DIR}
+if [ $? -ne 0 ] ; then
+    echo "Cannot create output directory"
+    exit 1
+fi
+
+wget -O ${BUILD_DIR}/config http://autobuild.buildroot.org/results/${BUILD_ID}/config
+if [ $? -ne 0 ] ; then
+    echo "Cannot get configuration for build ${BUILD_ID}"
+    rm -f ${BUILD_DIR}
+    exit 1
+fi
+
+wget -O ${BUILD_DIR}/gitid http://autobuild.buildroot.org/results/${BUILD_ID}/gitid
+
+cd ${BUILD_DIR}
+git clone ${BASE_GIT}
+if [ $? -ne 0 ] ; then
+    echo "Cannot clone Buildroot Git repository"
+    rm -rf ${BUILD_DIR}
+    exit 1
+fi
+
+cd buildroot
+
+git remote set-url origin git://git.busybox.net/buildroot
+
+git pull
+if [ $? -ne 0 ] ; then
+    echo "Cannot pull Buildroot Git repository"
+    rm -rf ${BUILD_DIR}
+    exit 1
+fi
+
+git checkout $(cat ../gitid)
+if [ $? -ne 0 ] ; then
+    echo "Cannot checkout commit " $(cat ../gitid)
+    rm -rf ${BUILD_DIR}
+    exit 1
+fi
+
+mkdir ../output
+cp ${BUILD_DIR}/config ../output/.config
+make 2>&1 O=../output | tee logfile
