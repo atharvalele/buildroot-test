@@ -103,7 +103,7 @@ function bab_get_last_day_results()
 {
   global $buildresultdir;
 
-  exec("(cd ${buildresultdir} ; ls -dltr --time-style=full-iso \$(find . -type d -daystart -ctime 1 | sed 's,^\./,,' | tr '\\n' ' '))",
+  exec("(cd ${buildresultdir} ; ls -dltr --time-style=full-iso \$(find . -type d -daystart -mtime 1 | sed 's,^\./,,' | tr '\\n' ' '))",
        $buildidlist);
 
   return _bab_build_result_array($buildidlist);
