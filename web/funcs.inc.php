@@ -78,7 +78,7 @@ function bab_get_results($start=0, $count=100)
   global $buildresultdir;
 
   /*
-   * So, we list all files, order by ctime (-tc) and show all details
+   * So, we list all files, order by mtime (-t) and show all details
    * (-l) and format the date with good format (full-iso).
    *
    * Then we filter the first line that gives the total number of
@@ -93,7 +93,7 @@ function bab_get_results($start=0, $count=100)
    * the PHP explode() function works well on this
    */
 
-  exec("ls -ltc --time-style=full-iso ${buildresultdir} | grep -v ^total | grep -v tmp | tail -n +${start} | head -${count} | sed 's/ \+/ /g'",
+  exec("ls -lt --time-style=full-iso ${buildresultdir} | grep -v ^total | grep -v tmp | tail -n +${start} | head -${count} | sed 's/ \+/ /g'",
        $buildidlist);
 
   return _bab_build_result_array($buildidlist);
@@ -103,7 +103,7 @@ function bab_get_last_day_results()
 {
   global $buildresultdir;
 
-  exec("(cd ${buildresultdir} ; ls -dltcr --time-style=full-iso \$(find . -type d -daystart -ctime 1 | sed 's,^\./,,' | tr '\\n' ' '))",
+  exec("(cd ${buildresultdir} ; ls -dltr --time-style=full-iso \$(find . -type d -daystart -ctime 1 | sed 's,^\./,,' | tr '\\n' ' '))",
        $buildidlist);
 
   return _bab_build_result_array($buildidlist);
