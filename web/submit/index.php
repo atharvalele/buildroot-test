@@ -42,7 +42,6 @@ function handleUpload()
     /* Perform some tests */
     if (! file_exists($thisbuildtmpdir . "status") ||
 	! file_exists($thisbuildtmpdir . "gitid")  ||
-	! file_exists($thisbuildtmpdir . "build.log.bz2") ||
 	! file_exists($thisbuildtmpdir . "build-end.log") ||
 	! file_exists($thisbuildtmpdir . "config") ||
 	! file_exists($thisbuildtmpdir . "submitter")) {
