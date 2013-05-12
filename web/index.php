@@ -10,8 +10,6 @@
 <?php
    include("funcs.inc.php");
 
-echo $_SERVER['REQUEST_URI'] . "<br/>";
-
 /* When no start is given, or start is a crazy value (not an integer),
    just default to start=0 */
 if (! isset($_GET['start']) || ! ereg("^[0-9]*$", $_GET['start']))
