@@ -69,7 +69,6 @@ while ($current = mysql_fetch_object($results)) {
   echo "<td>";
   echo "<a href=\"results/" . $current->identifier . "/\">dir</a>, ";
   echo "<a href=\"results/" . $current->identifier . "/build-end.log\">end log</a>, ";
-  echo "<a href=\"results/" . $current->identifier . "/build.log.bz2\">full log</a>, ";
   echo "<a href=\"results/" . $current->identifier . "/config\">config</a>";
   if (file_exists("results/" . $current->identifier . "/defconfig"))
     echo ", <a href=\"results/" . $current->identifier . "/defconfig\">defconfig</a>";
