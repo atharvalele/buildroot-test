@@ -6,8 +6,6 @@ The tarball must contain:
  - gitid, which should contain the Git commit id indicating the state
    of the Buildroot repository which was used for the test
 
- - build.log.bz2, the bzip2-compressed complete build log
-
  - build-end.log, the 100 last lines of the build log, uncompressed
 
  - config, the Buildroot configuration file that was used
