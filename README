@@ -1,7 +1,8 @@
 The tarball must contain:
 
- - status, with the text "OK" or "NOK", which indicates whether the
-   build was successful or not
+ - status, with the text "OK", "NOK" or "TIMEOUT", which indicates
+   whether the build was successful (OK), failed (NOK) or timed-out
+   (TIMEOUT).
 
  - gitid, which should contain the Git commit id indicating the state
    of the Buildroot repository which was used for the test
