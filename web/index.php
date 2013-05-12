@@ -1,14 +1,5 @@
-<html>
-  <head>
-    <title>Buildroot build tests</title>
-    <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
-   <link rel="alternate" href="rss.php" title="Autobuild Buildroot results" type="application/rss+xml" />
-  </head>
-  <body>
-    <h1>Buildroot build tests</h1>
-
 <?php
-   include("funcs.inc.php");
+include("funcs.inc.php");
 
 /* When no start is given, or start is a crazy value (not an integer),
    just default to start=0 */
@@ -33,6 +24,8 @@ else if ($_GET['status'] == 'TIMEOUT')
   $filter_status = 2;
 else
   $filter_status = -1;
+
+bab_header("Buildroot tests");
 
 echo "<table>\n";
 
@@ -93,11 +86,5 @@ if (($start + $step) < $total)
 
 echo "</p>";
 
+bab_footer();
 ?>
-
-<p style="width: 90%; margin: auto; text-align: center; font-size: 60%; border-top: 1px solid black; padding-top: 5px;">
-  <a href="http://buildroot.org">About Buildroot</a>&nbsp;-&nbsp;<a href="rss.php">RSS feed of build results</a>&nbsp;-&nbsp;<a href="http://git.buildroot.net/buildroot-test/plain/utils/br-reproduce-build">Script to reproduce a build</a>
-</p>
-
-  </body>
-</html>
