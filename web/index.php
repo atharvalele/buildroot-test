@@ -60,11 +60,11 @@ while ($current = mysql_fetch_object($results)) {
   echo "<td>" . $current->reason . "</td>";
 
   echo "<td>";
-  echo "<a href=\"results/" . $current->identifier . "/\">dir</a>, ";
-  echo "<a href=\"results/" . $current->identifier . "/build-end.log\">end log</a>, ";
-  echo "<a href=\"results/" . $current->identifier . "/config\">config</a>";
-  if (file_exists("results/" . $current->identifier . "/defconfig"))
-    echo ", <a href=\"results/" . $current->identifier . "/defconfig\">defconfig</a>";
+  echo "<a href=\"" . bab_get_path($current->identifier) . "/\">dir</a>, ";
+  echo "<a href=\"" . bab_get_path($current->identifier, "build-end.log") . "\">end log</a>, ";
+  echo "<a href=\"" . bab_get_path($current->identifier, "config") . "\">config</a>";
+  if (file_exists(bab_get_path($current->identifier, "defconfig")))
+    echo ", <a href=\"" . bab_get_path($current->identifier, "defconfig") . "\">defconfig</a>";
   echo "</td>";
 
   echo "</tr>\n";

@@ -84,4 +84,8 @@ function bab_get_last_day_results()
   return $ret;
 }
 
+function bab_get_path($identifier, $file) {
+  return "results/" . substr($identifier, 0, 3) . "/" . $identifier . "/" . $file;
+}
+
 ?>
