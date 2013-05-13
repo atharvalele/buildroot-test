@@ -45,6 +45,9 @@ function import_result($buildid, $filename)
       return;
     }
 
+    /* Remove the build.log.bz2 file if it's in there */
+    system("rm -f " . $thisbuildtmpdir . "build.log.bz2", $retval);
+
     /* Create the 'results/xyz/' directory if it doesn't already
        exists */
     if (! file_exists($finalbuildresultdir)) {
