@@ -67,23 +67,6 @@ function bab_get_results($start=0, $count=100, $filter_status=-1)
   return $ret;
 }
 
-/*
- * Returns the results of the last day
- */
-function bab_get_last_day_results()
-{
-  $db = new db();
-  $sql = "select * from results where date(builddate) = date(now() - interval 1 day) order by builddate";
-
-  $ret = $db->query($sql);
-  if ($ret == FALSE) {
-    echo "Something's wrong with the SQL query\n";
-    return;
-  }
-
-  return $ret;
-}
-
 function bab_get_path($identifier, $file) {
   return "results/" . substr($identifier, 0, 3) . "/" . $identifier . "/" . $file;
 }
