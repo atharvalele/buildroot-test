@@ -20,32 +20,41 @@ Header("Content-type: text/xml; charset=utf-8");
   <dc:creator>buildroot.org</dc:creator>
 
 <?php
-echo " <items>\n";
-echo "  <rdf:Seq>\n";
 
 $results = bab_get_results(0, 50);
 
-for ($i = 0; $i < count($results); $i++)
-  {
-    echo "<rdf:li rdf:resource=\"http://buildroot.humanoidz.org/results/" . $results[$i]['id'] . "\"/>\n";
-  }
-
+echo " <items>\n";
+echo "  <rdf:Seq>\n";
+while ($current = mysql_fetch_object($results))
+  echo "<rdf:li rdf:resource=\"http://buildroot.humanoidz.org/results/" .
+    $current->identifier . "\"/>\n";
 echo "  </rdf:Seq>\n";
 echo " </items>\n";
 echo "</channel>\n";
 
-for ($i = 0; $i < count($results); $i++)
-  {
-    $current = $results[$i];
-    echo " <item rdf:about=\"http://buildroot.humanoidz.org/results/" . $current['id'] . "\">\n";
-    echo "  <title>Build " . ($current['status'] == "OK" ? "successful" : "failed") . " at " . $current['date'] . "</title>\n";
-    echo "  <link>http://buildroot.humanoidz.org/results/" . $current['id'] . "</link>\n";
+mysql_data_seek($results, 0);
+
+while ($current = mysql_fetch_object($results)) {
+  echo " <item rdf:about=\"http://buildroot.humanoidz.org/results/" .
+    $current->identifier . "\">\n";
+
+  if ($current->status == 0)
+    $status = "successful";
+  else if ($current->status == 1)
+    $status = "failed";
+  else if ($current->status == 2)
+    $status = "timed out";
+
+    echo "  <title>Build " . $status . " at " . $current->builddate . "</title>\n";
+    echo "  <link>http://buildroot.humanoidz.org/results/" .
+      $current->identifier . "</link>\n";
     echo "  <description>\n";
-    if ($current['status'] == "OK") {
-      echo "A Buildroot build result, submitted by " . $current['submitter'] . " was successful. The build used the Git commit id " . $current['gitid'] . " and was targetting the " . $current['arch'] . " architecture.";
+    if ($current->status == 0) {
+      echo "A Buildroot build result, submitted by " .
+	$current->submitter . " was successful. The build used the Git commit id " . $current->commitid . " and was targetting the " . $current->arch . " architecture.";
     }
     else {
-      echo "A Buildroot build result, submitted by " . $current['submitter'] . " failed. The reason of the failure is: " . $current['reason'] . ". The build used the Git commit id " . $current['gitid'] . " and was targetting the " . $current['arch'] . " architecture.";
+      echo "A Buildroot build result, submitted by " . $current->submitter . " failed. The reason of the failure is: " . $current->reason . ". The build used the Git commit id " . $current->commitid . " and was targetting the " . $current->arch . " architecture.";
     }
     echo "  </description>\n";
     echo " </item>\n\n";
