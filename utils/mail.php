@@ -1,64 +1,123 @@
 <?php
 include(dirname(__FILE__) . "/../web/funcs.inc.php");
 
+if (count($argv) != 2) {
+  echo "Usage: mail.php email-address\n";
+  echo "email-address can be stdout\n";
+  exit;
+}
+
+$emailaddr = $argv[1];
+
 /*
  * This script is used through a contrab to send a daily e-mail to the
  * Buildroot mailing list with the results of the builds of the last
  * day.
  */
 
-$results = bab_get_last_day_results();
+$db = new db();
+
+$sql = "select status,count(id) as count from results " .
+  "where date(builddate) = date(now() - interval 1 day) group by status;";
 
 $success = 0;
-$failed = 0;
+$failures = 0;
+$timeouts = 0;
+$total = 0;
 
-while ($current = mysql_fetch_object($results)) {
-  if ($current->status == 0)
-    $success++;
-  else
-    $failed++;
+$ret = $db->query($sql);
+if ($ret == FALSE) {
+  echo "Error while getting MySQL results\n";
+  exit;
 }
 
-mysql_data_seek($results, 0);
+while ($current = mysql_fetch_object($ret)) {
+  if ($current->status == 0)
+    $success = $current->count;
+  else if ($current->status == 1)
+    $failures = $current->count;
+  else if ($current->status == 2)
+    $timeouts = $current->count;
+  $total += $current->count;
+}
 
 $buildsdate = strftime("%Y-%m-%d", strtotime("yesterday"));
 
-$contents = "Hello,\n\n";
-$contents .= "On " . $buildsdate . ", " . count($results) . " random build tests have been done and\nsubmitted on autobuild.buildroot.net.\n";
-$contents .= " " . $success . " builds have been successful\n";
-$contents .= " " . $failed  . " builds have failed\n\n";
-$contents .= "Below the results of the failed builds. Successful builds are omitted.\n\n";
+$contents = "";
 
-while ($current = mysql_fetch_object($results)) {
+$contents .= sprintf("Build statistics for %s\n", $buildsdate);
+$contents .= sprintf("===============================\n\n");
+$contents .= sprintf("%15s : %-3d\n", "success", $success);
+$contents .= sprintf("%15s : %-3d\n", "failures", $failures);
+$contents .= sprintf("%15s : %-3d\n", "timeouts", $failures);
+$contents .= sprintf("%15s : %-3d\n", "TOTAL", $total);
+
+$sql = "select reason,count(id) as reason_count from results " .
+  "where date(builddate) = date(now() - interval 1 day) and " .
+  "status != 0 group by reason order by reason_count desc;";
+
+$ret = $db->query($sql);
+if ($ret == FALSE) {
+  echo "Error while getting MySQL results\n";
+  exit;
+}
+
+$contents .= sprintf("\nClassification of failures by reason\n");
+$contents .= sprintf("====================================\n\n");
+
+while ($current = mysql_fetch_object($ret)) {
+  if (strlen($current->reason) >= 30)
+    $reason = substr($current->reason, 0, 27) . "...";
+  else
+    $reason = $current->reason;
+
+  $contents .= sprintf("%30s | %-2d\n", $reason, $current->reason_count);
+}
+
+$sql = "select * from results " .
+  "where date(builddate) = date(now() - interval 1 day) order by reason";
+
+$ret = $db->query($sql);
+if ($ret == FALSE) {
+  echo "Error while getting MySQL results\n";
+  exit;
+}
+
+$contents .= sprintf("\nDetail of failures\n");
+$contents .= sprintf("===================\n\n");
+
+while ($current = mysql_fetch_object($ret)) {
   if ($current->status == 0)
     continue;
   else if ($current->status == 1)
     $status = "NOK";
   else if ($current->status == 2)
-    $status = "TIMEOUT";
+    $status = "TIM";
 
-  $contents .= "Build ". $current->identifier . "\n";
-  $contents .= "==============================================\n\n";
-  $contents .= "Status         : " . $status . "\n";
-  $contents .= "Failure reason : " . $current->reason . "\n";
-  $contents .= "Architecture   : " . $current->arch . "\n";
-  $contents .= "Submitted by   : " . $current->submitter . "\n";
-  $contents .= "Submitted at   : " . $current->builddate . "\n";
-  $contents .= "Git commit ID  : http://git.buildroot.net/buildroot/commit/?id=" . $current->commitid . "\n";
-  $contents .= "End of log     : http://autobuild.buildroot.net/results/" . $current->identifier . "/build-end.log\n";
-  $contents .= "Complete log   : http://autobuild.buildroot.net/results/" . $current->identifier . "/build.log.bz2\n";
-  $contents .= "Configuration  : http://autobuild.buildroot.net/results/" . $current->identifier . "/config\n";
-  $contents .= "Defconfig      : http://autobuild.buildroot.net/results/" . $current->identifier . "/defconfig\n";
-  $contents .= "\n";
+  if (strlen($current->reason) >= 30)
+    $reason = substr($current->reason, 0, 27) . "...";
+  else
+    $reason = $current->reason;
+
+  $url = "http://autobuild.buildroot.net/results/" . $current->identifier . "/";
+
+  $contents .= sprintf("%10s | %30s | %3s | %40s\n",
+		       $current->arch,
+		       $reason,
+		       $status,
+		       $url);
 }
 
 $contents .= "\n\n";
 $contents .= "-- \n";
 $contents .= "http://autobuild.buildroot.net\n";
 
-mail("buildroot@uclibc.org",
-     "[autobuild.buildroot.net] Build results for " . $buildsdate,
-     $contents,
-     "From: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>\r\n");
+if ($emailaddr == "stdout")
+  echo $contents;
+else
+  mail($emailaddr,
+       "[autobuild.buildroot.net] Build results for " . $buildsdate,
+       $contents,
+       "From: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>\r\n");
 
 ?>
