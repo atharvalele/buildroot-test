@@ -49,7 +49,7 @@ $contents .= sprintf("Build statistics for %s\n", $buildsdate);
 $contents .= sprintf("===============================\n\n");
 $contents .= sprintf("%15s : %-3d\n", "success", $success);
 $contents .= sprintf("%15s : %-3d\n", "failures", $failures);
-$contents .= sprintf("%15s : %-3d\n", "timeouts", $failures);
+$contents .= sprintf("%15s : %-3d\n", "timeouts", $timeouts);
 $contents .= sprintf("%15s : %-3d\n", "TOTAL", $total);
 
 $sql = "select reason,count(id) as reason_count from results " .
