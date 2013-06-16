@@ -1,13 +1,17 @@
 <?php
 include(dirname(__FILE__) . "/../web/funcs.inc.php");
 
-if (count($argv) != 2) {
-  echo "Usage: mail.php email-address\n";
+$longopts = array("arch:", "to:", "cc:");
+
+$options = getopt("", $longopts);
+
+if (array_key_exists("to", $options))
+  $emailaddr = $options["to"];
+else {
+  echo "Usage: mail.php --to email-address [--arch ARCH] [--cc CC]\n";
   echo "email-address can be stdout\n";
   exit;
 }
-
-$emailaddr = $argv[1];
 
 /*
  * This script is used through a contrab to send a daily e-mail to the
@@ -17,8 +21,15 @@ $emailaddr = $argv[1];
 
 $db = new db();
 
+if (array_key_exists("arch", $options))
+  $condition = "and arch=" . $db->quote_smart($options["arch"]);
+else
+  $condition = "";
+
 $sql = "select status,count(id) as count from results " .
-  "where date(builddate) = date(now() - interval 1 day) group by status;";
+  "where date(builddate) = date(now() - interval 1 day) " .
+  $condition .
+  "group by status;";
 
 $success = 0;
 $failures = 0;
@@ -41,9 +52,17 @@ while ($current = mysql_fetch_object($ret)) {
   $total += $current->count;
 }
 
+/* Only send arch-specific reports when there are failures to
+   report */
+if (array_key_exists("arch", $options) && $failures == 0)
+  exit;
+
 $buildsdate = strftime("%Y-%m-%d", strtotime("yesterday"));
 
 $contents = "";
+
+if (array_key_exists("arch", $options))
+  $contents .= "Those results are limited to the " . $options["arch"] . " architecture.\n\n";
 
 $contents .= sprintf("Build statistics for %s\n", $buildsdate);
 $contents .= sprintf("===============================\n\n");
@@ -53,8 +72,9 @@ $contents .= sprintf("%15s : %-3d\n", "timeouts", $timeouts);
 $contents .= sprintf("%15s : %-3d\n", "TOTAL", $total);
 
 $sql = "select reason,count(id) as reason_count from results " .
-  "where date(builddate) = date(now() - interval 1 day) and " .
-  "status != 0 group by reason order by reason_count desc;";
+  "where date(builddate) = date(now() - interval 1 day) and status != 0 " .
+  $condition .
+  "group by reason order by reason_count desc;";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
@@ -75,7 +95,9 @@ while ($current = mysql_fetch_object($ret)) {
 }
 
 $sql = "select * from results " .
-  "where date(builddate) = date(now() - interval 1 day) order by reason";
+  "where date(builddate) = date(now() - interval 1 day) " .
+  $condition .
+  "order by reason";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
@@ -112,12 +134,23 @@ $contents .= "\n\n";
 $contents .= "-- \n";
 $contents .= "http://autobuild.buildroot.net\n";
 
-if ($emailaddr == "stdout")
-  echo $contents;
+$headers = "From: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>\r\n";
+if (array_key_exists("cc", $options))
+  $headers .= "Cc: " . $options["cc"] . "\r\n";
+
+if (array_key_exists("arch", $options))
+  $title = "[autobuild.buildroot.net] " . $options["arch"] . " build results for " . $buildsdate;
 else
-  mail($emailaddr,
-       "[autobuild.buildroot.net] Build results for " . $buildsdate,
-       $contents,
-       "From: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>\r\n");
+  $title = "[autobuild.buildroot.net] Build results for " . $buildsdate;
+
+if ($emailaddr == "stdout") {
+  echo $headers;
+  echo "\n\n";
+  echo $title;
+  echo "\n\n";
+  echo $contents;
+}
+else
+  mail($emailaddr, $title, $contents, $headers);
 
 ?>
