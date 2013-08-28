@@ -26,18 +26,16 @@ $total_data = array();
 
 while($current = mysql_fetch_object($ret)) {
   array_push($dates_data, $current->day);
-  array_push($success_data, $current->success);
-  array_push($failures_data, $current->failures);
-  array_push($timeouts_data, $current->timeouts);
-  array_push($total_data, $current->total);
+  array_push($success_data, $current->success * 100 / $current->total);
+  array_push($failures_data, $current->failures * 100 / $current->total);
+  array_push($timeouts_data, $current->timeouts * 100 / $current->total);
 }
 
 /* Add data in your dataset */
-$myData->addPoints($success_data, "success");
-$myData->addPoints($failures_data, "failure");
-$myData->addPoints($timeouts_data, "timeout");
-$myData->addPoints($total_data, "total");
-$myData->setAxisName(0,"Number of builds");
+$myData->addPoints($success_data, "success %");
+$myData->addPoints($failures_data, "failure %");
+$myData->addPoints($timeouts_data, "timeout %");
+$myData->setAxisName(0,"Percentage of builds");
 
 $myData->addPoints($dates_data, "Labels");
 $myData->setSerieDescription("Labels","Dates");
