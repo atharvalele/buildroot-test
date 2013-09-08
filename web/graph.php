@@ -9,7 +9,7 @@ $myData = new pData();
 
 $db = new db();
 
-$sql = "select * from (select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results group by date(builddate) order by builddate desc limit 30) as foo order by day;";
+$sql = "select * from (select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results group by date(builddate) order by builddate desc limit 180) as foo order by day;";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
@@ -42,15 +42,15 @@ $myData->setSerieDescription("Labels","Dates");
 $myData->setAbscissa("Labels");
 
 /* Create a pChart object and associate your dataset */
-$myPicture = new pImage(700,500,$myData);
+$myPicture = new pImage(1000,600,$myData);
 
 /* Choose a nice font */
 $myPicture->setFontProperties(array("FontName"=>"../externals/pchart/fonts/verdana.ttf","FontSize"=>8));
 
 /* Define the boundaries of the graph area */
-$myPicture->setGraphArea(70,50,650,400);
+$myPicture->setGraphArea(70,50,950,500);
 
-$myPicture->drawScale(array("LabelRotation" => 90));
+$myPicture->drawScale(array("LabelRotation" => 90, "LabelSkip" => 10));
 
 $myPicture->drawLegend(20,20,array("Style"=>LEGEND_NOBORDER,"Mode"=>LEGEND_HORIZONTAL));
 
