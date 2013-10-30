@@ -25,7 +25,7 @@ else if ($_GET['status'] == 'TIMEOUT')
 else
   $filter_status = -1;
 
-if (isset($_GET['arch']) && ereg("^[a-z0-9]*$", $_GET['arch']))
+if (isset($_GET['arch']) && ereg("^[a-z0-9_]*$", $_GET['arch']))
   $filter_arch = $_GET['arch'];
 else
   $filter_arch = "";
