@@ -61,7 +61,7 @@ while ($current = mysql_fetch_object($results)) {
 
   echo "<td><a href=\"http://git.buildroot.net/buildroot/commit/?id=" . $current->commitid . "\">" . substr($current->commitid, 0, 8) . "</a></td>";
   echo "<td>" . $submitter . "</td>";
-  echo "<td>" . $current->arch . "</td>";
+  echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a></td>";
   echo "<td>" . $current->reason . "</td>";
 
   echo "<td>";
