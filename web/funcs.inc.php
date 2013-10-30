@@ -52,11 +52,17 @@ function bab_total_results_count()
  * and limited to $count items. The items starting with $start=0 are
  * the most recent build results.
  */
-function bab_get_results($start=0, $count=100, $filter_status=-1)
+function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="")
 {
   $db = new db();
+  $where_parts = array();
   if ($filter_status != -1)
-    $condition = "where status=" . $db->quote_smart($filter_status) . " ";
+    $where_parts[] = " status=" . $db->quote_smart($filter_status) . " ";
+  if ($filter_arch != "")
+    $where_parts[] = " arch=" . $db->quote_smart($filter_arch) . " ";
+  if (count($where_parts)) {
+    $condition = "where " . implode("and", $where_parts);
+  }
   $sql = "select * from results $condition order by builddate desc limit $start, $count;";
   $ret = $db->query($sql);
   if ($ret == FALSE) {

@@ -25,6 +25,11 @@ else if ($_GET['status'] == 'TIMEOUT')
 else
   $filter_status = -1;
 
+if (isset($_GET['arch']) && ereg("^[a-z0-9]*$", $_GET['arch']))
+  $filter_arch = $_GET['arch'];
+else
+  $filter_arch = "";
+
 bab_header("Buildroot tests");
 
 echo "<table>\n";
@@ -33,7 +38,7 @@ echo "<tr class=\"header\">";
 echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch</td><td>Failure reason</td><td>Data</td>";
 echo "</tr>";
 
-$results = bab_get_results($start, $step, $filter_status);
+$results = bab_get_results($start, $step, $filter_status, $filter_arch);
 
 while ($current = mysql_fetch_object($results)) {
 
