@@ -30,6 +30,11 @@ if (isset($_GET['arch']) && ereg("^[a-z0-9_]*$", $_GET['arch']))
 else
   $filter_arch = "";
 
+if (isset($_GET['reason']) && ereg("^[A-Za-z0-9_\.\-]*$", $_GET['reason']))
+  $filter_reason = $_GET['reason'];
+else
+  $filter_reason = "";
+
 bab_header("Buildroot tests");
 
 echo "<table>\n";
@@ -38,7 +43,7 @@ echo "<tr class=\"header\">";
 echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch</td><td>Failure reason</td><td>Data</td>";
 echo "</tr>";
 
-$results = bab_get_results($start, $step, $filter_status, $filter_arch);
+$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason);
 
 while ($current = mysql_fetch_object($results)) {
 
@@ -62,7 +67,10 @@ while ($current = mysql_fetch_object($results)) {
   echo "<td><a href=\"http://git.buildroot.net/buildroot/commit/?id=" . $current->commitid . "\">" . substr($current->commitid, 0, 8) . "</a></td>";
   echo "<td>" . $submitter . "</td>";
   echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a></td>";
-  echo "<td>" . $current->reason . "</td>";
+  if ($current->reason == "none")
+    echo "<td>none</td>";
+  else
+    echo "<td><a href=\"?reason=" . $current->reason . "\">" . $current->reason . "</td>";
 
   echo "<td>";
   echo "<a href=\"" . bab_get_path($current->identifier) . "/\">dir</a>, ";
