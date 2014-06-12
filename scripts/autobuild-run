@@ -1,0 +1,490 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2014 by Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+# This script runs the autobuilder logic: it runs Buildroot builds for
+# random configuration and submits the result to
+# http://autobuild.buildroot.org.
+#
+# Configuration parameters are:
+#
+# - ninstances: the number of parallel, independent, build instances
+#   that are executed. Due to the non-parallel nature of configure
+#   scripts, it is recommended to have several parallel instances and
+#   to lower the number of parallel jobs per instances. Can be defined
+#   either through the command line, or through the configuration
+#   file.
+#
+# - njobs: the number of parallel jobs inside a given instance (i.e
+#   BR2_JLEVEL). Can be defined either through the command line, or
+#   through the configuration file.
+#
+# - http-login, http-password: the HTTP login and password to submit
+#   build results to http://autobuild.buildroot.org. Request those
+#   credentials from Thomas Petazzoni
+#   <thomas.petazzoni@free-electrons.com>. These configuration
+#   parameters can only be defined through the configuration file.
+#
+# - submitter: a human-readable string identifying the
+#   submitter/machine. Example: "Peter Korsgaard (gcc110)".
+#
+# TODO:
+#
+# - Do not set BR2_JLEVEL and BR2_DL_DIR in the configuration file,
+#   but through the environment, so that the configuration files can
+#   be re-used on other machines with no change.
+#
+# - Improve the logic that generates the 'build-end.log' file. Instead
+#   of just using the last 500 lines of the build log, search the
+#   start of the build of the failing package.
+#
+# - Add LC_ALL=C where appropriate.
+#
+
+import urllib2
+import csv
+from random import randint
+import subprocess
+from multiprocessing import Process
+import signal
+import os
+import shutil
+from time import localtime, strftime
+import sys
+import hashlib
+import argparse
+import ConfigParser
+
+MAX_DURATION = 60 * 60 * 4
+VERSION = 1
+
+def log_write(logf, msg):
+    logf.write("[%s] %s\n" % (strftime("%a, %d %b %Y %H:%M:%S", localtime()), msg))
+    logf.flush()
+
+def check_version():
+    r = urllib2.urlopen('http://autobuild.buildroot.org/version')
+    version = int(r.readline().strip())
+    if version > VERSION:
+        print "ERROR: script version too old, please upgrade."
+        sys.exit(1)
+
+# This function fetches the possible toolchain configurations, and
+# returns an array of dictionaries, with for each toolchain:
+#  - url: the URL of the toolchain defconfig
+#  - libc: the C library used by the toolchain
+#  - hostarch: the host architecture for which the toolchain is built
+#  - contents: an array of lines of the defconfig
+def get_toolchain_configs():
+    r = urllib2.urlopen('http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv')
+    l = r.readlines()
+    configs = []
+    for row in csv.reader(l):
+        config = {}
+        config["url"] = row[0]
+        config["hostarch"] = row[1]
+        # Ignore toolchains that are not built for the appropriate
+        # host architecture
+        (_, _, _, _, hostarch) = os.uname()
+        if hostarch == 'i686' or hostarch == 'x86_64':
+            hostarch = 'x86'
+        if hostarch != config["hostarch"]:
+            continue
+        config["libc"] = row[2]
+        r = urllib2.urlopen(config["url"])
+        config["contents"] = r.readlines()
+        configs.append(config)
+    return configs
+
+# This function prepares the build by making sure all the needed
+# directories are created, cloning or updating the Buildroot source
+# code, and cleaning up remaining stuff from previous builds.
+def prepare_build(instance, log):
+    idir = "instance-%d" % instance
+
+    log_write(log, "INFO: preparing a new build")
+
+    # If it doesn't exist, create the instance directory
+    if not os.path.exists(idir):
+        os.mkdir(idir)
+
+    # Create the download directory if it doesn't exist
+    dldir = os.path.join(idir, "dl")
+    if not os.path.exists(dldir):
+        os.mkdir(dldir)
+
+    # Remove 5 random files from the download directory. Removing
+    # random files from the download directory allows to ensure we
+    # regularly re-download files to check that their upstream
+    # location is still correct.
+    for i in range(0, 5):
+        flist = os.listdir(dldir)
+        if not flist:
+            break
+        f = flist[randint(0, len(flist) - 1)]
+        log_write(log, "INFO: removing %s from downloads" % f)
+        os.remove(f)
+
+    devnull = open(os.devnull, "w")
+
+    # Clone Buildroot. This only happens if the source directory
+    # didn't exist already.
+    srcdir = os.path.join(idir, "buildroot")
+    if not os.path.exists(srcdir):
+        ret = subprocess.call(["git", "clone", "git://git.busybox.net/buildroot", srcdir], stdout=devnull, stderr=devnull)
+        if ret != 0:
+            log_write(log, "ERROR: could not clone Buildroot sources")
+            return -1
+
+    # Update the Buildroot sources.
+    ret = subprocess.call(["git", "-C", srcdir, "pull"], stdout=devnull, stderr=devnull)
+    if ret != 0:
+        log_write(log, "ERROR: could not pull Buildroot sources")
+        return -1
+
+    # Create an empty output directory. We remove it first, in case a previous build was aborted.
+    outputdir = os.path.join(idir, "output")
+    if os.path.exists(outputdir):
+        # shutil.rmtree doesn't remove write-protected files
+        subprocess.call(["rm", "-rf", outputdir])
+    os.mkdir(outputdir)
+
+    return 0
+
+# This function makes adjustments to the configuration, as well as
+# additional validation to avoid cases that are known not to work.
+#
+# This function returns 'True' when the configuration has been
+# accepted, and 'False' when the configuration has not been accepted
+# (in which case another random configuration will be generated).
+
+def fixup_config(instance):
+    idir = "instance-%d" % instance
+    outputdir = os.path.join(idir, "output")
+
+    with open(os.path.join(outputdir, ".config")) as configf:
+        configlines = configf.readlines()
+
+    # Make sure Qt license is approved
+    if "BR2_PACKAGE_QT=y\n" in configlines:
+        if "# BR2_PACKAGE_QT_LICENSE_APPROVED is not set\n" in configlines:
+            configlines.remove("# BR2_PACKAGE_QT_LICENSE_APPROVED is not set\n")
+            configlines.append("BR2_PACKAGE_QT_LICENSE_APPROVED=y\n")
+    if "BR2_PACKAGE_QT5BASE=y\n" in configlines:
+        if "# BR2_PACKAGE_QT5BASE_LICENSE_APPROVED is not set\n" in configlines:
+            configlines.remove("# BR2_PACKAGE_QT5BASE_LICENSE_APPROVED is not set\n")
+            configlines.append("BR2_PACKAGE_QT5BASE_LICENSE_APPROVED=y\n")
+    # Make sure LTP is not enabled when we have an uClibc toolchain
+    if "BR2_PACKAGE_LTP_TESTSUITE=y\n" in configlines and \
+       "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
+        configlines.remove("BR2_PACKAGE_LTP_TESTSUITE=y\n")
+    # Make sure xfsprogs is not enabled when we have an uClibc toolchain
+    if "BR2_PACKAGE_XFSPROGS=y\n" in configlines and \
+       "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
+        configlines.remove("BR2_PACKAGE_XFSPROGS=y\n")
+    # Make sure mrouted is not enabled when we have an uClibc toolchain
+    if "BR2_PACKAGE_MROUTED=y\n" in configlines and \
+       "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
+        configlines.remove("BR2_PACKAGE_MROUTED=y\n")
+    if 'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/ctng-mips64-eglibc.tar.bz2"\n' in configlines and \
+            "BR2_PACKAGE_SQUID=y\n" in configlines:
+        return False
+    if 'BR2_PACKAGE_CLASSPATH=y\n' in configlines:
+        return False
+    if 'BR2_PACKAGE_PRBOOM=y\n' in configlines and \
+            'BR2_TOOLCHAIN_EXTERNAL_CODESOURCERY_SH201209=y\n' in configlines:
+        return False
+    if 'BR2_sh2a=y\n' in configlines and  'BR2_PACKAGE_LIBFFI=y\n' in configlines:
+        return False
+    if 'BR2_arc=y\n' in configlines and  'BR2_PACKAGE_LIBFFI=y\n' in configlines:
+        return False
+    if 'BR2_nios2=y\n' in configlines and 'BR2_PACKAGE_LIBFFI=y\n' in configlines:
+        return False
+    if 'BR2_PACKAGE_SUNXI_BOARDS=y\n' in configlines:
+        configlines.remove('BR2_PACKAGE_SUNXI_BOARDS_FEX_FILE=""\n')
+        configlines.append('BR2_PACKAGE_SUNXI_BOARDS_FEX_FILE="a10/hackberry.fex"\n')
+
+    with open(os.path.join(outputdir, ".config"), "w+") as configf:
+        configf.writelines(configlines)
+
+    return True
+
+# This function generates the configuration, by choosing a random
+# toolchain configuration and then generating a random selection of
+# packages.
+def gen_config(instance, njobs, log):
+    idir = "instance-%d" % instance
+    dldir = os.path.join(idir, "dl")
+    # We need the absolute path to use with O=, because the relative
+    # path to the output directory here is not relative to the
+    # Buildroot sources, but to the location of the autobuilder
+    # script.
+    outputdir = os.path.abspath(os.path.join(idir, "output"))
+    srcdir = os.path.join(idir, "buildroot")
+
+    log_write(log, "INFO: generate the configuration")
+
+    # Select a random toolchain configuration
+    configs = get_toolchain_configs()
+    i = randint(0, len(configs) - 1)
+    config = configs[i]
+
+    configlines = config["contents"]
+
+    # Amend the configuration with a few things.
+    configlines.append("BR2_DL_DIR=\"%s\"\n" % os.path.abspath(dldir))
+    configlines.append("BR2_JLEVEL=%d\n" % njobs)
+    configlines.append("BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y\n")
+    configlines.append("# BR2_TARGET_ROOTFS_TAR is not set\n")
+    if randint(0, 20) == 0:
+        configlines.append("BR2_ENABLE_DEBUG=y\n")
+    if randint(0, 30) == 0:
+        configlines.append("BR2_INIT_SYSTEMD=y\n")
+    elif randint(0, 20) == 0:
+        configlines.append("BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_EUDEV=y\n")
+    if config["libc"] != "glibc" and randint(0, 20) == 0:
+        configlines.append("BR2_PREFER_STATIC_LIB=y\n")
+
+    # Write out the configuration file
+    with open(os.path.join(outputdir, ".config"), "w+") as configf:
+        configf.writelines(configlines)
+
+    devnull = open(os.devnull, "w")
+
+    ret = subprocess.call(["bash", "-c", "yes '' 2>/dev/null| make O=%s -C %s oldconfig" % \
+                           (outputdir, srcdir)], stdout=devnull, stderr=devnull)
+    if ret != 0:
+        log_write(log, "ERROR: cannot oldconfig")
+        return -1
+
+    # Now, generate the random selection of packages, and fixup
+    # things if needed.
+    while False:
+        ret = subprocess.call(["make", "O=%s" % outputdir, "-C", srcdir,
+                               "KCONFIG_PROBABILITY=%d" % randint(1,1), "randpackageconfig"],
+                              stdout=devnull, stderr=devnull)
+        if ret != 0:
+            log_write(log, "ERROR: cannot generate random configuration")
+            return -1
+        if fixup_config(instance):
+            break
+
+    ret = subprocess.call(["bash", "-c", "yes '' 2>/dev/null| make O=%s -C %s oldconfig" % \
+                           (outputdir, srcdir)], stdout=devnull, stderr=devnull)
+    if ret != 0:
+        log_write(log, "ERROR: cannot oldconfig")
+        return -1
+
+    ret = subprocess.call(["make", "O=%s" % outputdir, "-C", srcdir, "savedefconfig"],
+                          stdout=devnull, stderr=devnull)
+    if ret != 0:
+        log_write(log, "ERROR: cannot savedefconfig")
+        return -1
+
+    return 0
+
+# Run the build itself
+def do_build(instance, log):
+    idir = "instance-%d" % instance
+    # We need the absolute path to use with O=, because the relative
+    # path to the output directory here is not relative to the
+    # Buildroot sources, but to the location of the autobuilder
+    # script.
+    outputdir = os.path.abspath(os.path.join(idir, "output"))
+    srcdir = os.path.join(idir, "buildroot")
+    f = open(os.path.join(outputdir, "logfile"), "w+")
+    log_write(log, "INFO: build started")
+    ret = subprocess.call(["timeout", str(MAX_DURATION), "make", "O=%s" % outputdir, "-C", srcdir],
+                          stdout=f, stderr=f)
+    # 124 is a special error code that indicates we have reached the
+    # timeout
+    if ret == 124:
+        log_write(log, "INFO: build timed out")
+        return -2
+    if ret != 0:
+        log_write(log, "INFO: build failed")
+        return -1
+    ret = subprocess.call(["make", "O=%s" % outputdir, "-C", srcdir], stdout=f, stderr=f)
+    if ret != 0:
+        log_write(log, "INFO: build failed during legal-info")
+        return -1
+    log_write(log, "INFO: build successful")
+    return 0
+
+# This function prepares the tarball with the results, and either
+# submits them to the official server (if the appropriate credentials
+# are available) or stores them locally as tarballs.
+def send_results(instance, http_login, http_password, submitter, log, result):
+    idir = "instance-%d" % instance
+    outputdir = os.path.abspath(os.path.join(idir, "output"))
+    srcdir = os.path.join(idir, "buildroot")
+    resultdir = os.path.join(outputdir, "results")
+
+    os.mkdir(resultdir)
+
+    shutil.copyfile(os.path.join(outputdir, ".config"),
+                    os.path.join(resultdir, "config"))
+    shutil.copyfile(os.path.join(outputdir, "defconfig"),
+                    os.path.join(resultdir, "defconfig"))
+    if os.path.exists(os.path.join(outputdir, "build", "build-time.log")):
+        shutil.copyfile(os.path.join(outputdir, "build", "build-time.log"),
+                        os.path.join(resultdir, "build-time.log"))
+    if os.path.exists(os.path.join(outputdir, "legal-info", "manifest.csv")):
+        shutil.copyfile(os.path.join(outputdir, "legal-info", "manifest.csv"),
+                        os.path.join(resultdir, "licenses-manifest.csv"))
+
+    subprocess.call(["bash", "-c", "git -C %s log master -n 1 --pretty=format:%%H > %s" % \
+                     (srcdir, os.path.join(resultdir, "gitid"))])
+    subprocess.call(["bash", "-c", "tail -500 %s > %s" % \
+                     (os.path.join(outputdir, "logfile"), os.path.join(resultdir, "build-end.log"))])
+
+    resultf = open(os.path.join(resultdir, "status"), "w+")
+    if result == 0:
+        resultf.write("OK")
+    elif result == -1:
+        resultf.write("NOK")
+    elif result == -2:
+        resultf.write("TIMEOUT")
+    resultf.close()
+
+    with open(os.path.join(resultdir, "submitter"), "w+") as submitterf:
+        submitterf.write(submitter)
+
+    shutil.make_archive(os.path.join(outputdir, "results"), "bztar",
+                        outputdir, "results")
+
+    if http_login and http_password:
+        # Submit results. Yes, Python has some HTTP libraries, but
+        # none of the ones that are part of the standard library can
+        # upload a file without writing dozens of lines of code.
+        ret = subprocess.call(["curl", "-u", "%s:%s" % (http_login, http_password),
+                               "-H", "Expect:",
+                               "-F", "uploadedfile=@%s" % os.path.join(outputdir, "results.tar.bz2"),
+                               "-F", "uploadsubmit=1",
+                               "http://autobuild.buildroot.org/submit/"],
+                              stdout=log, stderr=log)
+        if ret != 0:
+            log_write(log, "INFO: results could not be submitted, %d" % ret)
+        else:
+            log_write(log, "INFO: results were submitted successfully")
+    else:
+        # No http login/password, keep tarballs locally
+        with open(os.path.join(outputdir, "results.tar.bz2"), 'rb') as f:
+            sha1 = hashlib.sha1(f.read()).hexdigest()
+        resultfilename = "instance-%d-%s.tar.bz2" % (instance, sha1)
+        os.rename(os.path.join(outputdir, "results.tar.bz2"), resultfilename)
+        log_write(log, "INFO: results saved as %s" % resultfilename)
+
+# This function implements the main per-instance loop, which prepares
+# the build, generate a configuration, runs the build, and submits the
+# results.
+def run_instance(instance, njobs, http_login, http_password, submitter):
+    idir = "instance-%d" % instance
+    instance_log = open(os.path.join(idir, "instance.log"), "a+")
+    log_write(instance_log, "INFO: instance started")
+    while True:
+        check_version()
+
+        ret = prepare_build(instance, instance_log)
+        if ret != 0:
+            continue
+
+        ret = gen_config(instance, njobs, instance_log)
+        if ret != 0:
+            continue
+
+        ret = do_build(instance, instance_log)
+        send_results(instance, http_login, http_password, submitter, instance_log, ret)
+
+# Function to get the configuration parameters, either from the
+# command line, or through a configuration file.
+def config_get():
+    epilog_text = """
+Format of the configuration file:
+
+   [main]
+   ninstances = <value>
+   njobs = <value>
+   http-login = <value>
+   http-password = <value>
+   submitter = <value>
+"""
+
+    parser = argparse.ArgumentParser(description='Run Buildroot autobuilder',
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog=epilog_text)
+    parser.add_argument("--ninstances", '-n', metavar="NINSTANCES",
+                        help="Number of parallel instances", default=None)
+    parser.add_argument("--njobs", '-j', metavar="NJOBS",
+                        help="Number of parallel jobs", default=None)
+    parser.add_argument("--submitter", '-s', metavar="SUBMITTER",
+                        help="Name/machine of submitter")
+    parser.add_argument("--config", '-c', metavar="CONFIG",
+                        help="Path to configuration file")
+    args = parser.parse_args()
+
+    ninstances = 1
+    njobs = 1
+    http_login = None
+    http_password = None
+    submitter = "N/A"
+
+    if args.config:
+        if not os.path.exists(args.config):
+            print "ERROR: configuration file %s does not exist" % args.config
+            sys.exit(1)
+        parser = ConfigParser.RawConfigParser()
+        if not parser.read([args.config]):
+            print "ERROR: cannot parse configuration file %s" % args.config
+            sys.exit(1)
+        if parser.has_option('main', 'ninstances'):
+            ninstances = parser.getint('main', 'ninstances')
+        if parser.has_option('main', 'njobs'):
+            njobs = parser.getint('main', 'njobs')
+        if parser.has_option('main', 'http-login'):
+            http_login = parser.get('main', 'http-login')
+        if parser.has_option('main', 'http-password'):
+            http_password = parser.get('main', 'http-password')
+        if parser.has_option('main', 'submitter'):
+            submitter = parser.get('main', 'submitter')
+
+    if args.njobs:
+        njobs = args.njobs
+    if args.ninstances:
+        ninstances = args.ninstances
+    if args.submitter:
+        submitter = args.submitter
+
+    return (ninstances, njobs, http_login, http_password, submitter)
+
+if __name__ == '__main__':
+    check_version()
+    (ninstances, njobs, http_login, http_password, submitter) = config_get()
+    if http_login is None or http_password is None:
+        print "WARN: due to the lack of http login/password details, results will not be submitted"
+        print "WARN: tarballs of results will be kept locally only"
+    def sigterm_handler(signum, frame):
+        os.killpg(os.getpgid(os.getpid()), signal.SIGTERM)
+        sys.exit(1)
+    processes = []
+    for i in range(0, ninstances):
+        p = Process(target=run_instance, args=(i, njobs, http_login, http_password, submitter))
+        p.start()
+        processes.append(p)
+    signal.signal(signal.SIGTERM, sigterm_handler)
+    for p in processes:
+        p.join()
