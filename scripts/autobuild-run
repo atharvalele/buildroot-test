@@ -273,9 +273,9 @@ def gen_config(instance, njobs, log):
 
     # Now, generate the random selection of packages, and fixup
     # things if needed.
-    while False:
+    while True:
         ret = subprocess.call(["make", "O=%s" % outputdir, "-C", srcdir,
-                               "KCONFIG_PROBABILITY=%d" % randint(1,1), "randpackageconfig"],
+                               "KCONFIG_PROBABILITY=%d" % randint(1,30), "randpackageconfig"],
                               stdout=devnull, stderr=devnull)
         if ret != 0:
             log_write(log, "ERROR: cannot generate random configuration")
