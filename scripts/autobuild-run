@@ -88,15 +88,16 @@ def check_version():
 
 def check_requirements():
     devnull = open(os.devnull, "w")
+    needed_progs = ["make", "git", "gcc"]
+    missing_requirements = False
 
-    ret = subprocess.call(["which", "make"], stdout=devnull, stderr=devnull)
-    if ret != 0:
-        print "ERROR: your system lacks the 'make' program"
-        sys.exit(1)
+    for prog in needed_progs:
+        ret = subprocess.call(["which", prog], stdout=devnull, stderr=devnull)
+        if ret != 0:
+            print "ERROR: your system lacks the '%s' program" % prog
+            missing_requirements = True
 
-    ret = subprocess.call(["which", "git"], stdout=devnull, stderr=devnull)
-    if ret != 0:
-        print "ERROR: your system lacks the 'git' program"
+    if missing_requirements:
         sys.exit(1)
 
 # This function fetches the possible toolchain configurations, and
