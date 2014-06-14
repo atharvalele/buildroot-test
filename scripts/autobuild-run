@@ -150,7 +150,7 @@ def prepare_build(instance, log):
             break
         f = flist[randint(0, len(flist) - 1)]
         log_write(log, "INFO: removing %s from downloads" % f)
-        os.remove(f)
+        os.remove(os.path.join(dldir, f))
 
     devnull = open(os.devnull, "w")
 
