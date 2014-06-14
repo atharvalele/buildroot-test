@@ -469,9 +469,9 @@ Format of the configuration file:
             submitter = parser.get('main', 'submitter')
 
     if args.njobs:
-        njobs = args.njobs
+        njobs = int(args.njobs)
     if args.ninstances:
-        ninstances = args.ninstances
+        ninstances = int(args.ninstances)
     if args.submitter:
         submitter = args.submitter
 
