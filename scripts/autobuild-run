@@ -164,12 +164,9 @@ def prepare_build(instance, log):
             log_write(log, "ERROR: could not clone Buildroot sources")
             return -1
 
-    # Update the Buildroot sources. We don't use the simpler -C option
-    # of git, because it is not available in older versions of git.
+    # Update the Buildroot sources.
     abssrcdir = os.path.abspath(srcdir)
-    ret = subprocess.call(["git", "--git-dir=%s" % os.path.join(abssrcdir, ".git"),
-                           "--work-tree=%s" % abssrcdir, "pull"],
-                          stdout=log, stderr=log)
+    ret = subprocess.call(["git", "pull"], cwd=srcdir, stdout=log, stderr=log)
     if ret != 0:
         log_write(log, "ERROR: could not pull Buildroot sources")
         return -1
@@ -280,8 +277,8 @@ def gen_config(instance, njobs, log):
 
     devnull = open(os.devnull, "w")
 
-    ret = subprocess.call(["bash", "-c", "yes '' 2>/dev/null| make O=%s -C %s oldconfig" % \
-                           (outputdir, srcdir)], stdout=devnull, stderr=devnull)
+    ret = subprocess.call(["yes '' 2>/dev/null| make O=%s -C %s oldconfig" % \
+                           (outputdir, srcdir)], shell=True, stdout=devnull, stderr=devnull)
     if ret != 0:
         log_write(log, "ERROR: cannot oldconfig")
         return -1
@@ -298,8 +295,8 @@ def gen_config(instance, njobs, log):
         if fixup_config(instance):
             break
 
-    ret = subprocess.call(["bash", "-c", "yes '' 2>/dev/null| make O=%s -C %s oldconfig" % \
-                           (outputdir, srcdir)], stdout=devnull, stderr=devnull)
+    ret = subprocess.call(["yes '' 2>/dev/null| make O=%s -C %s oldconfig" % \
+                           (outputdir, srcdir)], shell=True, stdout=devnull, stderr=devnull)
     if ret != 0:
         log_write(log, "ERROR: cannot oldconfig")
         return -1
@@ -362,10 +359,12 @@ def send_results(instance, http_login, http_password, submitter, log, result):
         shutil.copyfile(os.path.join(outputdir, "legal-info", "manifest.csv"),
                         os.path.join(resultdir, "licenses-manifest.csv"))
 
-    subprocess.call(["bash", "-c", "git --git-dir=%s log master -n 1 --pretty=format:%%H > %s" % \
-                     (os.path.abspath(os.path.join(srcdir, ".git")), os.path.join(resultdir, "gitid"))])
-    subprocess.call(["bash", "-c", "tail -500 %s > %s" % \
-                     (os.path.join(outputdir, "logfile"), os.path.join(resultdir, "build-end.log"))])
+    subprocess.call(["git log master -n 1 --pretty=format:%%H > %s" % \
+                     os.path.join(resultdir, "gitid")],
+                    shell=True, cwd=srcdir)
+    subprocess.call(["tail -500 %s > %s" % \
+                     (os.path.join(outputdir, "logfile"), os.path.join(resultdir, "build-end.log"))],
+                    shell=True)
 
     resultf = open(os.path.join(resultdir, "status"), "w+")
     if result == 0:
