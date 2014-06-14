@@ -378,8 +378,13 @@ def send_results(instance, http_login, http_password, submitter, log, result):
     with open(os.path.join(resultdir, "submitter"), "w+") as submitterf:
         submitterf.write(submitter)
 
-    shutil.make_archive(os.path.join(outputdir, "results"), "bztar",
-                        outputdir, "results")
+    # Yes, shutil.make_archive() would be nice, but it doesn't exist
+    # in Python 2.6.
+    ret = subprocess.call(["tar", "cjf", "results.tar.bz2", "results"],
+                          cwd=outputdir, stdout=log, stderr=log)
+    if ret != 0:
+        log_write(log, "ERROR: could not make results tarball")
+        sys.exit(1)
 
     if http_login and http_password:
         # Submit results. Yes, Python has some HTTP libraries, but
