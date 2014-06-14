@@ -167,8 +167,8 @@ def prepare_build(instance, log):
     # Update the Buildroot sources. We don't use the simpler -C option
     # of git, because it is not available in older versions of git.
     abssrcdir = os.path.abspath(srcdir)
-    ret = subprocess.call(["git", "--git-dir", os.path.join(abssrcdir, ".git"),
-                           "--work-tree", abssrcdir, "pull"],
+    ret = subprocess.call(["git", "--git-dir=%s" % os.path.join(abssrcdir, ".git"),
+                           "--work-tree=%s" % abssrcdir, "pull"],
                           stdout=log, stderr=log)
     if ret != 0:
         log_write(log, "ERROR: could not pull Buildroot sources")
