@@ -144,13 +144,14 @@ def prepare_build(instance, log):
     # didn't exist already.
     srcdir = os.path.join(idir, "buildroot")
     if not os.path.exists(srcdir):
-        ret = subprocess.call(["git", "clone", "git://git.busybox.net/buildroot", srcdir], stdout=devnull, stderr=devnull)
+        ret = subprocess.call(["git", "clone", "git://git.busybox.net/buildroot", srcdir],
+                              stdout=log, stderr=log)
         if ret != 0:
             log_write(log, "ERROR: could not clone Buildroot sources")
             return -1
 
     # Update the Buildroot sources.
-    ret = subprocess.call(["git", "-C", srcdir, "pull"], stdout=devnull, stderr=devnull)
+    ret = subprocess.call(["git", "-C", srcdir, "pull"], stdout=log, stderr=log)
     if ret != 0:
         log_write(log, "ERROR: could not pull Buildroot sources")
         return -1
