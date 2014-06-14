@@ -95,7 +95,7 @@ function import_result($buildid, $filename)
       $reason = "none";
     else {
 	$tmp = Array();
-	exec("tail -1 " . $thisbuildfinaldir . "build-end.log | sed 's,make: .*/\(build\|toolchain\)/\([^/]*\)/.*,\\2,'", $tmp);
+	exec("tail -3 " . $thisbuildfinaldir . "build-end.log | grep '\*\*\*' | sed 's,make: .*/\(build\|toolchain\)/\([^/]*\)/.*,\\2,'", $tmp);
 	if (trim($tmp[0]))
 	  $reason = $tmp[0];
 	else
