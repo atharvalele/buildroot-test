@@ -54,6 +54,9 @@
 #
 # - Add LC_ALL=C where appropriate.
 #
+# - Instead of excluding all configurations that have
+#   BR2_PACKAGE_CLASSPATH=y, improve the script to detect whether the
+#   necessary host machine requirements are there to build classpath.
 
 import urllib2
 import csv
