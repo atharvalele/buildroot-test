@@ -362,8 +362,8 @@ def send_results(instance, http_login, http_password, submitter, log, result):
         shutil.copyfile(os.path.join(outputdir, "legal-info", "manifest.csv"),
                         os.path.join(resultdir, "licenses-manifest.csv"))
 
-    subprocess.call(["bash", "-c", "git -C %s log master -n 1 --pretty=format:%%H > %s" % \
-                     (srcdir, os.path.join(resultdir, "gitid"))])
+    subprocess.call(["bash", "-c", "git --git-dir=%s log master -n 1 --pretty=format:%%H > %s" % \
+                     (os.path.abspath(os.path.join(srcdir, ".git")), os.path.join(resultdir, "gitid"))])
     subprocess.call(["bash", "-c", "tail -500 %s > %s" % \
                      (os.path.join(outputdir, "logfile"), os.path.join(resultdir, "build-end.log"))])
 
