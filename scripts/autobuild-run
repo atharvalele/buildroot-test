@@ -121,10 +121,6 @@ def prepare_build(instance, log):
 
     log_write(log, "INFO: preparing a new build")
 
-    # If it doesn't exist, create the instance directory
-    if not os.path.exists(idir):
-        os.mkdir(idir)
-
     # Create the download directory if it doesn't exist
     dldir = os.path.join(idir, "dl")
     if not os.path.exists(dldir):
@@ -394,6 +390,11 @@ def send_results(instance, http_login, http_password, submitter, log, result):
 # results.
 def run_instance(instance, njobs, http_login, http_password, submitter):
     idir = "instance-%d" % instance
+
+    # If it doesn't exist, create the instance directory
+    if not os.path.exists(idir):
+        os.mkdir(idir)
+
     instance_log = open(os.path.join(idir, "instance.log"), "a+")
     log_write(instance_log, "INFO: instance started")
     while True:
