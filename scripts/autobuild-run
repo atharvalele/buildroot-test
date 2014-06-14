@@ -200,9 +200,6 @@ def fixup_config(instance):
     if "BR2_PACKAGE_MROUTED=y\n" in configlines and \
        "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
         configlines.remove("BR2_PACKAGE_MROUTED=y\n")
-    if 'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/ctng-mips64-eglibc.tar.bz2"\n' in configlines and \
-            "BR2_PACKAGE_SQUID=y\n" in configlines:
-        return False
     if 'BR2_PACKAGE_CLASSPATH=y\n' in configlines:
         return False
     if 'BR2_PACKAGE_PRBOOM=y\n' in configlines and \
