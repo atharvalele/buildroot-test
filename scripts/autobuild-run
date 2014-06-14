@@ -86,6 +86,17 @@ def check_version():
         print "ERROR: script version too old, please upgrade."
         sys.exit(1)
 
+def check_requirements():
+    ret = subprocess.call(["which", "make"])
+    if ret != 0:
+        print "ERROR: your system lacks the 'make' program"
+        sys.exit(1)
+
+    ret = subprocess.call(["which", "git"])
+    if ret != 0:
+        print "ERROR: your system lacks the 'git' program"
+        sys.exit(1)
+
 # This function fetches the possible toolchain configurations, and
 # returns an array of dictionaries, with for each toolchain:
 #  - url: the URL of the toolchain defconfig
@@ -479,6 +490,7 @@ Format of the configuration file:
 
 if __name__ == '__main__':
     check_version()
+    check_requirements()
     (ninstances, njobs, http_login, http_password, submitter) = config_get()
     if http_login is None or http_password is None:
         print "WARN: due to the lack of http login/password details, results will not be submitted"
