@@ -87,12 +87,14 @@ def check_version():
         sys.exit(1)
 
 def check_requirements():
-    ret = subprocess.call(["which", "make"])
+    devnull = open(os.devnull, "w")
+
+    ret = subprocess.call(["which", "make"], stdout=devnull, stderr=devnull)
     if ret != 0:
         print "ERROR: your system lacks the 'make' program"
         sys.exit(1)
 
-    ret = subprocess.call(["which", "git"])
+    ret = subprocess.call(["which", "git"], stdout=devnull, stderr=devnull)
     if ret != 0:
         print "ERROR: your system lacks the 'git' program"
         sys.exit(1)
