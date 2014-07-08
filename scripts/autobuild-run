@@ -220,6 +220,14 @@ def fixup_config(instance):
     # We don't have Java installed on the build machine
     if 'BR2_PACKAGE_XBMC=y\n' in configlines:
         return False
+    # The ctng toolchain is affected by PR58854
+    if 'BR2_PACKAGE_LTTNG_TOOLS=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/armv6-ctng-linux-uclibcgnueabi.tar.xz"\n' in configlines:
+        return False
+    # The ctng toolchain is affected by PR58854
+    if 'BR2_PACKAGE_LTTNG_TOOLS=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/armv7-ctng-linux-gnueabihf.tar.xz"\n' in configlines:
+        return False
     if 'BR2_PACKAGE_PRBOOM=y\n' in configlines and \
             'BR2_TOOLCHAIN_EXTERNAL_CODESOURCERY_SH201209=y\n' in configlines:
         return False
