@@ -9,7 +9,6 @@ http://autobuild.buildroot.org/toolchains/configs/br-arm-cortex-a9-bleeding-edge
 http://autobuild.buildroot.org/toolchains/configs/br-arm-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-arm-full-nothread.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-arm-internal-full.config,x86,uclibc
-http://autobuild.buildroot.org/toolchains/configs/br-avr32-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-i386-pentium4-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-microblazeel-full-internal.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-mipsel-o32-full.config,x86,uclibc
