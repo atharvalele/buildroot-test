@@ -85,10 +85,13 @@ def check_version():
         print "ERROR: script version too old, please upgrade."
         sys.exit(1)
 
-def check_requirements():
+def check_requirements(http_login, http_password):
     devnull = open(os.devnull, "w")
     needed_progs = ["make", "git", "gcc"]
     missing_requirements = False
+
+    if http_login and http_password:
+        needed_progs.append("curl")
 
     for prog in needed_progs:
         ret = subprocess.call(["which", prog], stdout=devnull, stderr=devnull)
@@ -548,9 +551,9 @@ Format of the configuration file:
 
 if __name__ == '__main__':
     check_version()
-    check_requirements()
     sysinfo = SystemInfo()
     (ninstances, njobs, http_login, http_password, submitter) = config_get()
+    check_requirements(http_login, http_password)
     if http_login is None or http_password is None:
         print "WARN: due to the lack of http login/password details, results will not be submitted"
         print "WARN: tarballs of results will be kept locally only"
