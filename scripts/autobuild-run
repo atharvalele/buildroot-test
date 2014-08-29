@@ -50,6 +50,9 @@
 #
 # - Add LC_ALL=C where appropriate.
 #
+# - Include the config.log file (when it exists) in the tarball for
+#   failed builds when the failure occurs on an autotools package.
+#
 # - Instead of excluding all configurations that have
 #   BR2_PACKAGE_CLASSPATH=y, improve the script to detect whether the
 #   necessary host machine requirements are there to build classpath.
