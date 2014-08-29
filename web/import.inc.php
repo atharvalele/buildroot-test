@@ -45,6 +45,13 @@ function import_result($buildid, $filename)
       return;
     }
 
+    system("grep -q 'fork: Cannot allocate memory' " . $thisbuildtmpdir . "build-end.log",
+	   $retval);
+    if ($retval == 0) {
+      echo "Reject build result, there was a memory allocation problem\n";
+      return;
+    }
+
     /* Remove the build.log.bz2 file if it's in there */
     system("rm -f " . $thisbuildtmpdir . "build.log.bz2", $retval);
 
