@@ -235,6 +235,10 @@ def fixup_config(instance):
     if 'BR2_PACKAGE_LIBMPEG2=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/powerpc-ctng-linux-uclibc.tar.xz"\n' in configlines:
         return False
+    # The ctng toolchain has a too old glibc version, which lacks SYS_getdents64
+    if 'BR2_PACKAGE_PYTHON3=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mips64el-ctng_n64-linux-gnu.tar.xz"\n' in configlines:
+        return False
     if 'BR2_PACKAGE_PRBOOM=y\n' in configlines and \
             'BR2_TOOLCHAIN_EXTERNAL_CODESOURCERY_SH201209=y\n' in configlines:
         return False
