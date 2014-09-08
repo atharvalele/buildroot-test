@@ -87,7 +87,7 @@ def check_version():
 
 def check_requirements(http_login, http_password):
     devnull = open(os.devnull, "w")
-    needed_progs = ["make", "git", "gcc"]
+    needed_progs = ["make", "git", "gcc", "timeout"]
     missing_requirements = False
 
     if http_login and http_password:
