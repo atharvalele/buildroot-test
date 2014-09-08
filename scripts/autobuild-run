@@ -115,7 +115,7 @@ class SystemInfo:
                                stdout=devnull, stderr=devnull) == 1:
                 self.has_java = True
 
-        self.has_java = False
+        self.has_javac = False
         if subprocess.call(["which", "javac"], stdout=devnull, stderr=devnull) == 0:
             if subprocess.call("javac -version | grep gcj", shell=True,
                                stdout=devnull, stderr=devnull) == 1:
