@@ -246,7 +246,7 @@ def fixup_config(instance, sysinfo):
     if "BR2_NEEDS_HOST_JAR=y\n" in configlines and not sysinfo.has_jar:
         return False
     # python-nfc needs bzr
-    if 'BR2_PACKAGE_PYTHON_NFC=y' in configlines and not sysinfo.has_bzr:
+    if 'BR2_PACKAGE_PYTHON_NFC=y\n' in configlines and not sysinfo.has_bzr:
         return False
     # The ctng toolchain is affected by PR58854
     if 'BR2_PACKAGE_LTTNG_TOOLS=y\n' in configlines and \
