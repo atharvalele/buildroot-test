@@ -123,7 +123,7 @@ while ($current = mysql_fetch_object($ret)) {
 
   $url = "http://autobuild.buildroot.net/results/" . $current->identifier . "/";
 
-  $contents .= sprintf("%10s | %30s | %3s | %40s\n",
+  $contents .= sprintf("%12s | %30s | %3s | %40s\n",
 		       $current->arch,
 		       $reason,
 		       $status,
