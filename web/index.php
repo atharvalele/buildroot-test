@@ -52,8 +52,10 @@ while ($current = mysql_fetch_object($results)) {
 
   if ($current->status == 0)
     echo "<tr class=\"ok\">\n";
-  else
+  else if ($current->status == 1)
     echo "<tr class=\"nok\">\n";
+  else if ($current->status == 2)
+    echo "<tr class=\"timeout\">\n";
 
   echo "<td>" . $current->builddate . "</td>";
 

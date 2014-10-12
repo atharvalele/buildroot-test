@@ -29,3 +29,7 @@ table tr.ok td {
 table tr.nok td {
     background-color: #ffa879;
 }
+
+table tr.timeout td {
+    background-color: #ffe79e;
+}
