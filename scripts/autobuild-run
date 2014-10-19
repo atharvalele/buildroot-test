@@ -577,7 +577,7 @@ Format of the configuration file:
 
     return (ninstances, njobs, http_login, http_password, submitter)
 
-if __name__ == '__main__':
+def main():
     check_version()
     sysinfo = SystemInfo()
     (ninstances, njobs, http_login, http_password, submitter) = config_get()
@@ -596,3 +596,6 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, sigterm_handler)
     for p in processes:
         p.join()
+
+if __name__ == '__main__':
+    main()
