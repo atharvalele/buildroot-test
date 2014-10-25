@@ -285,8 +285,6 @@ def fixup_config(instance, sysinfo):
         return False
     if 'BR2_sh2a=y\n' in configlines and  'BR2_PACKAGE_LIBFFI=y\n' in configlines:
         return False
-    if 'BR2_arc=y\n' in configlines and  'BR2_PACKAGE_LIBFFI=y\n' in configlines:
-        return False
     if 'BR2_nios2=y\n' in configlines and 'BR2_PACKAGE_LIBFFI=y\n' in configlines:
         return False
     if 'BR2_PACKAGE_SUNXI_BOARDS=y\n' in configlines:
