@@ -718,6 +718,7 @@ def main():
         """Kill all children"""
 
         # uninstall signal handler to prevent being called for all subprocesses
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
         # stop all instances to prevent new children to be spawned
@@ -757,6 +758,7 @@ def main():
         p.start()
         processes.append(p)
 
+    signal.signal(signal.SIGINT, sigterm_handler)
     signal.signal(signal.SIGTERM, sigterm_handler)
 
     for p in processes:
