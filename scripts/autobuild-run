@@ -53,8 +53,6 @@
 #   etc.
 # - Detect selection of multiple virtual package providers and don't consider it
 #   a failure
-# - Properly handle kill of main script: stop all running children and do not
-#   print out stacktraces
 # - Fix problem in removal of output directory: sometimes this fails with
 #   message 'directory not empty' which suggests that someone is writing to the
 #   directory at the time of removal.
@@ -97,9 +95,10 @@ import urllib2
 import csv
 from random import randint
 import subprocess
-from multiprocessing import Process
+import multiprocessing
 import signal
 import os
+import errno
 import shutil
 from time import localtime, strftime
 import sys
@@ -463,11 +462,16 @@ def do_build(**kwargs):
     srcdir = os.path.join(idir, "buildroot")
     f = open(os.path.join(outputdir, "logfile"), "w+")
     log_write(log, "INFO: build started")
+
     cmd = ["timeout", str(MAX_DURATION), "make", "O=%s" % outputdir,
             "-C", srcdir, "BR2_DL_DIR=%s" % dldir,
             "BR2_JLEVEL=%s" % kwargs['njobs']] \
           + kwargs['make_opts'].split()
-    ret = subprocess.call(cmd, stdout=f, stderr=f)
+    sub = subprocess.Popen(cmd, stdout=f, stderr=f)
+    kwargs['buildpid'][kwargs['instance']] = sub.pid
+    ret = sub.wait()
+    kwargs['buildpid'][kwargs['instance']] = 0
+
     # 124 is a special error code that indicates we have reached the
     # timeout
     if ret == 124:
@@ -711,11 +715,35 @@ def main():
         print "WARN: tarballs of results will be kept locally only"
 
     def sigterm_handler(signum, frame):
+        """Kill all children"""
+
+        # uninstall signal handler to prevent being called for all subprocesses
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+        # stop all instances to prevent new children to be spawned
+        for p in processes:
+            p.terminate()
+
+        # kill build processes started with timeout (that puts its children
+        # explicitly in a separate process group)
+        for pid in buildpid:
+            if pid == 0:
+                continue
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError as e:
+                if e.errno != errno.ESRCH: # No such process, ignore
+                    raise
+
+        # kill any remaining children in our process group
         os.killpg(os.getpgid(os.getpid()), signal.SIGTERM)
+
         sys.exit(1)
+
+    buildpid = multiprocessing.Array('i', int(args['--ninstances']))
     processes = []
     for i in range(0, int(args['--ninstances'])):
-        p = Process(target=run_instance, kwargs=dict(
+        p = multiprocessing.Process(target=run_instance, kwargs=dict(
                 instance = i,
                 njobs = args['--njobs'],
                 sysinfo = sysinfo,
@@ -723,11 +751,14 @@ def main():
                 http_password = args['--http-password'],
                 submitter = args['--submitter'],
                 make_opts = args['--make-opts'],
-                upload = upload
+                upload = upload,
+                buildpid = buildpid
             ))
         p.start()
         processes.append(p)
+
     signal.signal(signal.SIGTERM, sigterm_handler)
+
     for p in processes:
         p.join()
 
