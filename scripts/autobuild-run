@@ -120,12 +120,12 @@ def check_version():
         print "ERROR: script version too old, please upgrade."
         sys.exit(1)
 
-def check_requirements(http_login, http_password):
+def check_requirements(upload=False):
     devnull = open(os.devnull, "w")
     needed_progs = ["make", "git", "gcc", "timeout"]
     missing_requirements = False
 
-    if http_login and http_password:
+    if upload:
         needed_progs.append("curl")
 
     for prog in needed_progs:
@@ -536,7 +536,7 @@ def send_results(result, **kwargs):
         log_write(log, "ERROR: could not make results tarball")
         sys.exit(1)
 
-    if kwargs['http_login'] and kwargs['http_password']:
+    if kwargs['upload']:
         # Submit results. Yes, Python has some HTTP libraries, but
         # none of the ones that are part of the standard library can
         # upload a file without writing dozens of lines of code.
@@ -631,10 +631,15 @@ def main():
         # merge config/args, priority given to args
         args = merge(args, ini_config)
 
-    check_requirements(args['--http-login'], args['--http-password'])
-    if args['--http-login'] is None or args['--http-password'] is None:
+    # http_login/password could theoretically be allowed as empty, so check
+    # explicitly on None.
+    upload = (args['--http-login'] is not None) \
+             and (args['--http-password'] is not None)
+    check_requirements(upload)
+    if not upload:
         print "WARN: due to the lack of http login/password details, results will not be submitted"
         print "WARN: tarballs of results will be kept locally only"
+
     def sigterm_handler(signum, frame):
         os.killpg(os.getpgid(os.getpid()), signal.SIGTERM)
         sys.exit(1)
@@ -647,7 +652,8 @@ def main():
                 http_login = args['--http-login'],
                 http_password = args['--http-password'],
                 submitter = args['--submitter'],
-                make_opts = args['--make-opts']
+                make_opts = args['--make-opts'],
+                upload = upload
             ))
         p.start()
         processes.append(p)
