@@ -72,6 +72,9 @@ Options:
                                  reasons it is recommended to define this in the
                                  config file instead, with user-read permissions
                                  only)
+  --make-opts OPTSTRING          string of extra options to pass to Buildroot
+                                 make, such as specific command wrappers
+                                 [default: ]
   -c, --config CONFIG            path to configuration file
 
 Format of the configuration file:
@@ -439,7 +442,7 @@ def gen_config(instance, log, sysinfo):
 
     return 0
 
-def do_build(instance, njobs, log):
+def do_build(instance, njobs, log, make_opts):
     """Run the build itself"""
 
     idir = "instance-%d" % instance
@@ -452,8 +455,10 @@ def do_build(instance, njobs, log):
     srcdir = os.path.join(idir, "buildroot")
     f = open(os.path.join(outputdir, "logfile"), "w+")
     log_write(log, "INFO: build started")
-    ret = subprocess.call(["timeout", str(MAX_DURATION), "make", "O=%s" % outputdir, "-C", srcdir,
-                           "BR2_DL_DIR=%s" % dldir, "BR2_JLEVEL=%s" % njobs], stdout=f, stderr=f)
+    cmd = ["timeout", str(MAX_DURATION), "make", "O=%s" % outputdir,
+            "-C", srcdir, "BR2_DL_DIR=%s" % dldir, "BR2_JLEVEL=%s" % njobs] \
+          + make_opts.split()
+    ret = subprocess.call(cmd, stdout=f, stderr=f)
     # 124 is a special error code that indicates we have reached the
     # timeout
     if ret == 124:
@@ -544,7 +549,8 @@ def send_results(instance, http_login, http_password, submitter, log, result):
         os.rename(os.path.join(outputdir, "results.tar.bz2"), resultfilename)
         log_write(log, "INFO: results saved as %s" % resultfilename)
 
-def run_instance(instance, njobs, http_login, http_password, submitter, sysinfo):
+def run_instance(instance, njobs, http_login, http_password, submitter,
+                 make_opts, sysinfo):
     """Main per-instance loop
 
     Prepare the build, generate a configuration, run the build, and submit the
@@ -570,7 +576,7 @@ def run_instance(instance, njobs, http_login, http_password, submitter, sysinfo)
         if ret != 0:
             continue
 
-        ret = do_build(instance, njobs, instance_log)
+        ret = do_build(instance, njobs, instance_log, make_opts)
         send_results(instance, http_login, http_password, submitter, instance_log, ret)
 
 # args / config file merging inspired by:
@@ -625,7 +631,7 @@ def main():
     for i in range(0, int(args['--ninstances'])):
         p = Process(target=run_instance, args=(i, int(args['--njobs']),
                 args['--http-login'], args['--http-password'],
-                args['--submitter'], sysinfo))
+                args['--submitter'], args['--make-opts'], sysinfo))
         p.start()
         processes.append(p)
     signal.signal(signal.SIGTERM, sigterm_handler)
