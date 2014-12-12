@@ -44,10 +44,6 @@
 #
 # TODO:
 #
-# - Improve the logic that generates the 'build-end.log' file. Instead
-#   of just using the last 500 lines of the build log, search the
-#   start of the build of the failing package.
-#
 # - Include the config.log file (when it exists) in the tarball for
 #   failed builds when the failure occurs on an autotools package.
 #
@@ -510,9 +506,52 @@ def send_results(result, **kwargs):
     subprocess.call(["git log master -n 1 --pretty=format:%%H > %s" % \
                      os.path.join(resultdir, "gitid")],
                     shell=True, cwd=srcdir)
-    subprocess.call(["tail -500 %s > %s" % \
-                     (os.path.join(outputdir, "logfile"), os.path.join(resultdir, "build-end.log"))],
-                    shell=True)
+
+    def get_failure_reason():
+        # Output is a tuple (package, version), or None.
+
+        lastlines = subprocess.check_output(["tail", "-n", "3",
+                        os.path.join(outputdir, "logfile")]).splitlines()
+
+        import re
+        regexp = re.compile(r'make: \*\*\* .*/(?:build|toolchain)/([^/]*)/')
+        for line in lastlines:
+            m = regexp.search(line)
+            if m:
+                return m.group(1).rsplit('-', 1)
+
+        # not found
+        return None
+
+    def extract_end_log(resultfile):
+        """Save the last part of the build log, starting from the failed package"""
+
+        def extract_last_500_lines():
+            subprocess.call(["tail -500 %s > %s" % \
+                             (os.path.join(outputdir, "logfile"), resultfile)],
+                            shell=True)
+
+        reason = get_failure_reason()
+        if not reason:
+            extract_last_500_lines()
+        else:
+            import mmap
+            f = open(os.path.join(outputdir, "logfile"), 'r')
+            mf = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+            mf.seek(0)
+            # Search for first action on the failed package
+            offset = mf.find('>>> %s' % ' '.join(reason))
+            if offset != -1:
+                with open(resultfile, "w") as endlog:
+                    endlog.write(mf[offset:])
+            else:
+                # not found, use last 500 lines as fallback
+                extract_last_500_lines()
+
+            mf.close()
+            f.close()
+
+    extract_end_log(os.path.join(resultdir, "build-end.log"))
 
     resultf = open(os.path.join(resultdir, "status"), "w+")
     if result == 0:
