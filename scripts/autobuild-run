@@ -47,6 +47,17 @@
 # - Instead of excluding all configurations that have
 #   BR2_PACKAGE_CLASSPATH=y, improve the script to detect whether the
 #   necessary host machine requirements are there to build classpath.
+# - Integrate method check-requirements with the SysInfo class, distinghuishing
+#   between required and optional dependencies.
+# - Extend required dependencies to subversion, mercurial, cpio, wget, python,
+#   etc.
+# - Detect selection of multiple virtual package providers and don't consider it
+#   a failure
+# - Properly handle kill of main script: stop all running children and do not
+#   print out stacktraces
+# - Fix problem in removal of output directory: sometimes this fails with
+#   message 'directory not empty' which suggests that someone is writing to the
+#   directory at the time of removal.
 
 """autobuild-run - run Buildroot autobuilder
 
