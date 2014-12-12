@@ -44,9 +44,6 @@
 #
 # TODO:
 #
-# - Include the config.log file (when it exists) in the tarball for
-#   failed builds when the failure occurs on an autotools package.
-#
 # - Instead of excluding all configurations that have
 #   BR2_PACKAGE_CLASSPATH=y, improve the script to detect whether the
 #   necessary host machine requirements are there to build classpath.
@@ -552,6 +549,26 @@ def send_results(result, **kwargs):
             f.close()
 
     extract_end_log(os.path.join(resultdir, "build-end.log"))
+
+    def copy_config_log_files():
+        """Recursively copy any config.log files from the failing package"""
+
+        reason = get_failure_reason()
+        if not reason:
+            return
+
+        srcroot = os.path.join(outputdir, "build", '-'.join(reason))
+        destroot = os.path.join(resultdir, '-'.join(reason))
+
+        for root, dirs, files in os.walk(srcroot):
+            dest = os.path.join(destroot, os.path.relpath(root, srcroot))
+
+            for file in files:
+                if file == 'config.log':
+                    os.makedirs(dest)
+                    shutil.copy(os.path.join(root, file), os.path.join(dest, file))
+
+    copy_config_log_files()
 
     resultf = open(os.path.join(resultdir, "status"), "w+")
     if result == 0:
