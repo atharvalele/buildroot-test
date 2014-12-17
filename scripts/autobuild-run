@@ -348,7 +348,7 @@ def gen_config(instance, log, sysinfo):
     elif randint(0, 20) == 0:
         configlines.append("BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_EUDEV=y\n")
     if config["libc"] != "glibc" and randint(0, 20) == 0:
-        configlines.append("BR2_PREFER_STATIC_LIB=y\n")
+        configlines.append("BR2_STATIC_LIBS=y\n")
 
     # Write out the configuration file
     with open(os.path.join(outputdir, ".config"), "w+") as configf:
