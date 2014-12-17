@@ -341,6 +341,7 @@ def gen_config(instance, log, sysinfo):
     # Amend the configuration with a few things.
     configlines.append("BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y\n")
     configlines.append("# BR2_TARGET_ROOTFS_TAR is not set\n")
+    configlines.append("BR2_COMPILER_PARANOID_UNSAFE_PATH=y\n")
     if randint(0, 20) == 0:
         configlines.append("BR2_ENABLE_DEBUG=y\n")
     if randint(0, 30) == 0:
