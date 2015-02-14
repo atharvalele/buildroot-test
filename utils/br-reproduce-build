@@ -3,12 +3,12 @@
 # A directory that contains an existing Git repository of
 # Buildroot. The script will git clone from it instead of git cloning
 # from the official repo, in order to reduce the clone time.
-BASE_GIT=/home/test/buildroot/
+BASE_GIT="${BASE_GIT:-/home/test/buildroot/}"
 
 # Location where the output directories will be created. One
 # subdirectory, named after the build ID will be created for each
 # build.
-OUTPUT_DIR=/home/test/outputs/
+OUTPUT_DIR="${OUTPUT_DIR:-/home/test/outputs/}"
 
 if [ $# -ne 1 ] ; then
     echo "Usage: $0 buildid" ;
