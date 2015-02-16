@@ -319,6 +319,11 @@ def fixup_config(instance, sysinfo):
     if 'BR2_PACKAGE_STRACE=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-mipsel-o32-full-2014.11.tar.bz2"\n' in configlines:
         return False
+    # This MIPS uClibc toolchain fails to build the cdrkit package
+    if 'BR2_PACKAGE_CDRKIT=y\n' in configlines and \
+       'BR2_STATIC_LIBS=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
+        return False
 
     with open(os.path.join(outputdir, ".config"), "w+") as configf:
         configf.writelines(configlines)
