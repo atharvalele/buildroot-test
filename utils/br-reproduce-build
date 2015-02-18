@@ -36,7 +36,7 @@ fi
 wget -O ${BUILD_DIR}/gitid http://autobuild.buildroot.org/results/${BUILD_ID}/gitid
 
 cd ${BUILD_DIR}
-git clone ${BASE_GIT}
+git clone ${BASE_GIT} buildroot
 if [ $? -ne 0 ] ; then
     echo "Cannot clone Buildroot Git repository"
     rm -rf ${BUILD_DIR}
