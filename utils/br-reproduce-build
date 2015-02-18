@@ -47,9 +47,9 @@ cd buildroot
 
 git remote set-url origin git://git.busybox.net/buildroot
 
-git pull
+git fetch
 if [ $? -ne 0 ] ; then
-    echo "Cannot pull Buildroot Git repository"
+    echo "Cannot fetch Buildroot official Git repository"
     rm -rf ${BUILD_DIR}
     exit 1
 fi
