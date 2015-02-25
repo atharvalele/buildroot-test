@@ -259,8 +259,6 @@ def prepare_build(**kwargs):
         log_write(log, "INFO: removing %s from downloads" % f)
         os.remove(os.path.join(dldir, f))
 
-    devnull = open(os.devnull, "w")
-
     # Clone Buildroot. This only happens if the source directory
     # didn't exist already.
     srcdir = os.path.join(idir, "buildroot")
@@ -273,7 +271,7 @@ def prepare_build(**kwargs):
 
     # Update the Buildroot sources.
     abssrcdir = os.path.abspath(srcdir)
-    ret = subprocess.call(["git", "pull"], cwd=srcdir, stdout=log, stderr=log)
+    ret = subprocess.call(["git", "pull"], cwd=abssrcdir, stdout=log, stderr=log)
     if ret != 0:
         log_write(log, "ERROR: could not pull Buildroot sources")
         return -1
@@ -418,7 +416,6 @@ def gen_config(**kwargs):
     idir = "instance-%d" % kwargs['instance']
     log = kwargs['log']
 
-    dldir = os.path.join(idir, "dl")
     # We need the absolute path to use with O=, because the relative
     # path to the output directory here is not relative to the
     # Buildroot sources, but to the location of the autobuilder
