@@ -107,6 +107,8 @@ Default values for the arguments are:
 
 __doc__ = doc
 
+from __future__ import print_function
+
 import urllib2
 import csv
 from random import randint
@@ -134,7 +136,7 @@ def check_version():
     r = urllib2.urlopen('http://autobuild.buildroot.org/version')
     version = int(r.readline().strip())
     if version > VERSION:
-        print "ERROR: script version too old, please upgrade."
+        print("ERROR: script version too old, please upgrade.")
         sys.exit(1)
 
 def check_requirements(upload=False):
@@ -148,7 +150,7 @@ def check_requirements(upload=False):
     for prog in needed_progs:
         ret = subprocess.call(["which", prog], stdout=devnull, stderr=devnull)
         if ret != 0:
-            print "ERROR: your system lacks the '%s' program" % prog
+            print("ERROR: your system lacks the '%s' program" % prog)
             missing_requirements = True
 
     if missing_requirements:
@@ -682,12 +684,12 @@ def load_ini_config(configfile):
     """Load configuration from file, returning a docopt-like dictionary"""
 
     if not os.path.exists(configfile):
-        print "ERROR: configuration file %s does not exist" % configfile
+        print("ERROR: configuration file %s does not exist" % configfile)
         sys.exit(1)
 
     config = ConfigParser.RawConfigParser()
     if not config.read(configfile):
-        print "ERROR: cannot parse configuration file %s" % configfile
+        print("ERROR: cannot parse configuration file %s" % configfile)
         sys.exit(1)
 
     # Prepend '--' to options specified in the config file, so they can be
@@ -730,8 +732,8 @@ def main():
              and (args['--http-password'] is not None)
     check_requirements(upload)
     if not upload:
-        print "WARN: due to the lack of http login/password details, results will not be submitted"
-        print "WARN: tarballs of results will be kept locally only"
+        print("WARN: due to the lack of http login/password details, results will not be submitted")
+        print("WARN: tarballs of results will be kept locally only")
 
     def sigterm_handler(signum, frame):
         """Kill all children"""
