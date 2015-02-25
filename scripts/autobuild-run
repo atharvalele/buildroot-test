@@ -109,6 +109,7 @@ __doc__ = doc
 
 from __future__ import print_function
 
+import contextlib
 import csv
 from random import randint
 import subprocess
@@ -132,6 +133,7 @@ else:
     import urllib2 as _urllib
 
 urlopen = _urllib.urlopen
+urlopen_closing = lambda uri: contextlib.closing(urlopen(uri))
 
 if sys.hexversion >= 0x3000000:
     def decode_bytes(b):
@@ -154,8 +156,8 @@ def log_write(logf, msg):
     logf.flush()
 
 def check_version():
-    r = urlopen('http://autobuild.buildroot.org/version')
-    version = int(decode_bytes(r.readline()).strip())
+    with urlopen_closing('http://autobuild.buildroot.org/version') as r:
+        version = int(decode_bytes(r.readline()).strip())
     if version > VERSION:
         print("ERROR: script version too old, please upgrade.")
         sys.exit(1)
@@ -208,9 +210,10 @@ def get_toolchain_configs():
         - hostarch: the host architecture for which the toolchain is built
         - contents: an array of lines of the defconfig
     """
+    tc_cfg_uri = 'http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv'
 
-    r = urlopen('http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv')
-    l = decode_byte_list(r.readlines())
+    with urlopen_closing(tc_cfg_uri) as r:
+        l = decode_byte_list(r.readlines())
     configs = []
     for row in csv.reader(l):
         config = {}
@@ -224,8 +227,8 @@ def get_toolchain_configs():
         if hostarch != config["hostarch"]:
             continue
         config["libc"] = row[2]
-        r = urlopen(config["url"])
-        config["contents"] = decode_byte_list(r.readlines())
+        with urlopen_closing(config["url"]) as r:
+            config["contents"] = decode_byte_list(r.readlines())
         configs.append(config)
     return configs
 
