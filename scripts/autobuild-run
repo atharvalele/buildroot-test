@@ -162,9 +162,20 @@ def check_version():
         print("ERROR: script version too old, please upgrade.")
         sys.exit(1)
 
-def has_prog(name):
-    with open(os.devnull, "w") as devnull:
-        return subprocess.call(["which", name], stdout=devnull, stderr=devnull) == os.EX_OK
+def has_prog(name, flags=os.X_OK, env=os.environ):
+    if not name or name[0] == os.sep: raise ValueError(name)
+
+    prog_path = env.get("PATH", None)
+    # for windows compatibility, we'd need to take PATHEXT into account
+
+    if prog_path:
+        for prog_dir in filter(None, prog_path.split(os.pathsep)):
+            # os.join() not necessary: non-empty prog_dir and name[0] != os.sep
+            prog = prog_dir + os.sep + name
+            if os.access(prog, flags):
+                return True
+    # --
+    return False
 
 def check_requirements(upload=False):
     needed_progs = ["make", "git", "gcc", "timeout"]
