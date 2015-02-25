@@ -109,7 +109,6 @@ __doc__ = doc
 
 from __future__ import print_function
 
-import urllib2
 import csv
 from random import randint
 import subprocess
@@ -125,6 +124,13 @@ import argparse
 import ConfigParser
 import docopt
 
+if sys.hexversion >= 0x3000000:
+    import urllib.request as _urllib
+else:
+    import urllib2 as _urllib
+
+urlopen = _urllib.urlopen
+
 MAX_DURATION = 60 * 60 * 4
 VERSION = 1
 
@@ -133,7 +139,7 @@ def log_write(logf, msg):
     logf.flush()
 
 def check_version():
-    r = urllib2.urlopen('http://autobuild.buildroot.org/version')
+    r = urlopen('http://autobuild.buildroot.org/version')
     version = int(r.readline().strip())
     if version > VERSION:
         print("ERROR: script version too old, please upgrade.")
@@ -188,7 +194,7 @@ def get_toolchain_configs():
         - contents: an array of lines of the defconfig
     """
 
-    r = urllib2.urlopen('http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv')
+    r = urlopen('http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv')
     l = r.readlines()
     configs = []
     for row in csv.reader(l):
@@ -203,7 +209,7 @@ def get_toolchain_configs():
         if hostarch != config["hostarch"]:
             continue
         config["libc"] = row[2]
-        r = urllib2.urlopen(config["url"])
+        r = urlopen(config["url"])
         config["contents"] = r.readlines()
         configs.append(config)
     return configs
