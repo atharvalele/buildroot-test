@@ -215,15 +215,17 @@ def get_toolchain_configs():
     with urlopen_closing(tc_cfg_uri) as r:
         l = decode_byte_list(r.readlines())
     configs = []
+
+    (_, _, _, _, hostarch) = os.uname()
+    if hostarch == 'i686' or hostarch == 'x86_64':
+        hostarch = 'x86'
+
     for row in csv.reader(l):
         config = {}
         config["url"] = row[0]
         config["hostarch"] = row[1]
         # Ignore toolchains that are not built for the appropriate
         # host architecture
-        (_, _, _, _, hostarch) = os.uname()
-        if hostarch == 'i686' or hostarch == 'x86_64':
-            hostarch = 'x86'
         if hostarch != config["hostarch"]:
             continue
         config["libc"] = row[2]
