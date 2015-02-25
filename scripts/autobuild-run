@@ -125,8 +125,10 @@ import ConfigParser
 import docopt
 
 if sys.hexversion >= 0x3000000:
+    import configparser
     import urllib.request as _urllib
 else:
+    import ConfigParser as configparser
     import urllib2 as _urllib
 
 urlopen = _urllib.urlopen
@@ -706,7 +708,7 @@ def load_ini_config(configfile):
         print("ERROR: configuration file %s does not exist" % configfile)
         sys.exit(1)
 
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     if not config.read(configfile):
         print("ERROR: cannot parse configuration file %s" % configfile)
         sys.exit(1)
