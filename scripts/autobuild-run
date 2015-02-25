@@ -162,8 +162,11 @@ def check_version():
         print("ERROR: script version too old, please upgrade.")
         sys.exit(1)
 
+def has_prog(name):
+    with open(os.devnull, "w") as devnull:
+        return subprocess.call(["which", name], stdout=devnull, stderr=devnull) == os.EX_OK
+
 def check_requirements(upload=False):
-    devnull = open(os.devnull, "w")
     needed_progs = ["make", "git", "gcc", "timeout"]
     missing_requirements = False
 
@@ -171,8 +174,7 @@ def check_requirements(upload=False):
         needed_progs.append("curl")
 
     for prog in needed_progs:
-        ret = subprocess.call(["which", prog], stdout=devnull, stderr=devnull)
-        if ret != 0:
+        if not has_prog(prog):
             print("ERROR: your system lacks the '%s' program" % prog)
             missing_requirements = True
 
@@ -182,24 +184,18 @@ def check_requirements(upload=False):
 class SystemInfo:
     def __init__(self):
         devnull = open(os.devnull, "w")
+        # _grep_gcj :: str -> int
+        _grep_gcj = lambda prog: \
+            subprocess.call("%s -version | grep gcj" % prog, shell=True,
+                            stdout=devnull, stderr=devnull)
 
-        self.has_bzr = \
-          subprocess.call(["which", "bzr"], stdout=devnull, stderr=devnull) == 0
+        self.has_bzr = has_prog("bzr")
 
-        self.has_java = False
-        if subprocess.call(["which", "java"], stdout=devnull, stderr=devnull) == 0:
-            if subprocess.call("java -version | grep gcj", shell=True,
-                               stdout=devnull, stderr=devnull) == 1:
-                self.has_java = True
+        self.has_java = has_prog("java") and _grep_gcj("java") == 1
 
-        self.has_javac = False
-        if subprocess.call(["which", "javac"], stdout=devnull, stderr=devnull) == 0:
-            if subprocess.call("javac -version | grep gcj", shell=True,
-                               stdout=devnull, stderr=devnull) == 1:
-                self.has_javac = True
+        self.has_javac = has_prog("javac") and _grep_gcj("javac") == 1
 
-        self.has_jar = \
-          subprocess.call(["which", "jar"], stdout=devnull, stderr=devnull) == 0
+        self.has_jar = has_prog("jar")
 
 def get_toolchain_configs():
     """Fetch and return the possible toolchain configurations
