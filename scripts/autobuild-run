@@ -131,6 +131,19 @@ else:
 
 urlopen = _urllib.urlopen
 
+if sys.hexversion >= 0x3000000:
+    def decode_bytes(b):
+        return b.decode()
+
+    def decode_byte_list(bl):
+        return [b.decode() for b in bl]
+else:
+    def _identity(e):
+        return e
+
+    decode_bytes = _identity
+    decode_byte_list = _identity
+
 MAX_DURATION = 60 * 60 * 4
 VERSION = 1
 
@@ -140,7 +153,7 @@ def log_write(logf, msg):
 
 def check_version():
     r = urlopen('http://autobuild.buildroot.org/version')
-    version = int(r.readline().strip())
+    version = int(decode_bytes(r.readline()).strip())
     if version > VERSION:
         print("ERROR: script version too old, please upgrade.")
         sys.exit(1)
@@ -195,7 +208,7 @@ def get_toolchain_configs():
     """
 
     r = urlopen('http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv')
-    l = r.readlines()
+    l = decode_byte_list(r.readlines())
     configs = []
     for row in csv.reader(l):
         config = {}
@@ -210,7 +223,7 @@ def get_toolchain_configs():
             continue
         config["libc"] = row[2]
         r = urlopen(config["url"])
-        config["contents"] = r.readlines()
+        config["contents"] = decode_byte_list(r.readlines())
         configs.append(config)
     return configs
 
