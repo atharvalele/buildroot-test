@@ -57,16 +57,25 @@
 #   message 'directory not empty' which suggests that someone is writing to the
 #   directory at the time of removal.
 
-"""autobuild-run - run Buildroot autobuilder
+# Don't tell docopt about the defaults, as it would not allow the following
+# priority hierarchy for arguments: command-line > config file > defaults
+defaults = {
+    '--ninstances': '1',
+    '--njobs': '1',
+    '--submitter': 'N/A',
+    '--make-opts': '',
+}
+
+doc = """autobuild-run - run Buildroot autobuilder
 
 Usage: autobuild-run [options]
 
 Options:
   -h, --help                     show this help message and exit
   -V, --version                  show version
-  -n, --ninstances NINSTANCES    number of parallel instances [default: 1]
-  -j, --njobs NJOBS              number of parallel jobs [default: 1]
-  -s, --submitter SUBMITTER      name/machine of submitter [default: N/A]
+  -n, --ninstances NINSTANCES    number of parallel instances
+  -j, --njobs NJOBS              number of parallel jobs
+  -s, --submitter SUBMITTER      name/machine of submitter
   --http-login LOGIN             username to send results with
   --http-password PASSWORD       password to send results with (for security
                                  reasons it is recommended to define this in the
@@ -89,7 +98,14 @@ Format of the configuration file:
    http-login = <value>
    http-password = <value>
    submitter = <value>
-"""
+
+Default values for the arguments are:
+
+  %s
+""" % '\n  '.join(
+    ['%s = %s' % (key, val) for (key, val) in defaults.iteritems()])
+
+__doc__ = doc
 
 import urllib2
 import csv
@@ -698,12 +714,15 @@ def main():
     check_version()
     sysinfo = SystemInfo()
 
-    args = docopt.docopt(__doc__, version=VERSION)
+    args = docopt.docopt(doc, version=VERSION)
 
     if args['--config']:
         ini_config = load_ini_config(args['--config'])
         # merge config/args, priority given to args
         args = merge(args, ini_config)
+
+    # load in defaults at lowest priority
+    args = merge(args, defaults)
 
     # http_login/password could theoretically be allowed as empty, so check
     # explicitly on None.
