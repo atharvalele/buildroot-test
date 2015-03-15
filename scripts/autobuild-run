@@ -411,6 +411,11 @@ def fixup_config(**kwargs):
        'BR2_STATIC_LIBS=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
         return False
+    # uClibc vfork static linking issue
+    if 'BR2_PACKAGE_ALSA_LIB=y\n' in configlines and \
+       'BR2_STATIC_LIBS=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/i486-ctng-linux-uclibc.tar.xz"\n' in configlines:
+        return False
 
     with open(os.path.join(outputdir, ".config"), "w+") as configf:
         configf.writelines(configlines)
