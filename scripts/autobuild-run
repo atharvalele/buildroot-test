@@ -562,9 +562,8 @@ def send_results(result, **kwargs):
 
     def get_failure_reason():
         # Output is a tuple (package, version), or None.
-
-        lastlines = subprocess.check_output(["tail", "-n", "3",
-                        os.path.join(outputdir, "logfile")]).splitlines()
+        lastlines = subprocess.Popen(["tail", "-n", "3",
+                                      os.path.join(outputdir, "logfile")], stdout=subprocess.PIPE).communicate()[0].splitlines()
 
         import re
         regexp = re.compile(r'make: \*\*\* .*/(?:build|toolchain)/([^/]*)/')
