@@ -1,2 +1,3 @@
 web/config.inc.php
 web/toolchains/tarballs/*.tar.*
+scripts/*.pyc
