@@ -105,7 +105,7 @@ Default values for the arguments are:
 
   %s
 """ % '\n  '.join(
-    ['%s = %s' % (key, val) for (key, val) in defaults.iteritems()])
+    ['%s = %s' % (key, val) for (key, val) in defaults.items()])
 
 __doc__ = doc
 
