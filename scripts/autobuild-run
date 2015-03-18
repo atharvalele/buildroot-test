@@ -111,17 +111,19 @@ __doc__ = doc
 
 import contextlib
 import csv
-from random import randint
-import subprocess
-import multiprocessing
-import signal
-import os
-import errno
-import shutil
-from time import localtime, strftime
-import sys
-import hashlib
 import docopt
+import errno
+import hashlib
+import mmap
+import multiprocessing
+import os
+from random import randint
+import re
+import shutil
+import signal
+import subprocess
+import sys
+from time import localtime, strftime
 
 if sys.hexversion >= 0x3000000:
     import configparser
@@ -584,7 +586,6 @@ def send_results(result, **kwargs):
             ["tail", "-n", "3", os.path.join(outputdir, "logfile")],
             stdout=subprocess.PIPE).communicate()[0]).splitlines()
 
-        import re
         regexp = re.compile(r'make: \*\*\* .*/(?:build|toolchain)/([^/]*)/')
         for line in lastlines:
             m = regexp.search(line)
@@ -606,7 +607,6 @@ def send_results(result, **kwargs):
         if not reason:
             extract_last_500_lines()
         else:
-            import mmap
             f = open(os.path.join(outputdir, "logfile"), 'r')
             mf = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
             mf.seek(0)
