@@ -139,12 +139,16 @@ if sys.hexversion >= 0x3000000:
 
     def decode_byte_list(bl):
         return [b.decode() for b in bl]
+
+    def encode_str(s):
+        return s.encode()
 else:
     def _identity(e):
         return e
 
     decode_bytes = _identity
     decode_byte_list = _identity
+    encode_str = _identity
 
 MAX_DURATION = 60 * 60 * 4
 VERSION = 1
@@ -607,10 +611,10 @@ def send_results(result, **kwargs):
             mf = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
             mf.seek(0)
             # Search for first action on the failed package
-            offset = mf.find('>>> %s' % ' '.join(reason))
+            offset = mf.find(encode_str('>>> %s' % ' '.join(reason)))
             if offset != -1:
                 with open(resultfile, "w") as endlog:
-                    endlog.write(mf[offset:])
+                    endlog.write(decode_bytes(mf[offset:]))
             else:
                 # not found, use last 500 lines as fallback
                 extract_last_500_lines()
