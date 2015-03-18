@@ -121,8 +121,6 @@ import shutil
 from time import localtime, strftime
 import sys
 import hashlib
-import argparse
-import ConfigParser
 import docopt
 
 if sys.hexversion >= 0x3000000:
