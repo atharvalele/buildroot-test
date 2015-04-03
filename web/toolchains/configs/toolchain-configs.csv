@@ -13,7 +13,6 @@ http://autobuild.buildroot.org/toolchains/configs/br-arm-musl.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-i386-pentium4-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-microblazeel-full-internal.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-mipsel-o32-full.config,x86,uclibc
-http://autobuild.buildroot.org/toolchains/configs/br-powerpc-603e-basic-cpp.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-powerpc-e500mc-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-powerpc-internal-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-sh4-full.config,x86,uclibc
