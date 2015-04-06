@@ -560,7 +560,10 @@ def do_build(**kwargs):
     if ret != 0:
         log_write(log, "INFO: build failed")
         return -1
-    ret = subprocess.call(["make", "O=%s" % outputdir, "-C", srcdir], stdout=f, stderr=f)
+    cmd = ["make", "O=%s" % outputdir, "-C", srcdir,
+            "BR2_DL_DIR=%s" % dldir, "legal-info"] \
+          + kwargs['make_opts'].split()
+    ret = subprocess.call(cmd, stdout=f, stderr=f)
     if ret != 0:
         log_write(log, "INFO: build failed during legal-info")
         return -1
