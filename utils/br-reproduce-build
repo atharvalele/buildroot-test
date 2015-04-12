@@ -16,9 +16,24 @@ if [ $# -ne 1 ] ; then
     exit 1 ;
 fi
 
-BUILD_ID="$1"
+# The location where the results are stored on the server is
+# of the form 'xxx/xxxyyyyyyyy', where 'xxx' are the first
+# three chars of the sha1, and 'xxxyyyyyyyy' is the full sha1.
+#
+# We accept the user to pass either the full sha1, or the full
+# sha1 prefixed with the 'xxx' part. So we just extract the sha1
+# from the value passed by the user
+BUILD_ID="${1#*/}"
 
+# The build directory is only made of the full sha1, without the
+# leading 'xxx/' part
 BUILD_DIR="${OUTPUT_DIR}/${BUILD_ID}"
+
+# Now, we construct the BUILD-ID as it is expected to be on the server:
+# - extract the first three chars of the sha1: use some shell trickery:
+# - prepend those three chars and a '/' to the full sha1
+BUILD_ID_SHORT="${BUILD_ID:0:3}"
+BUILD_ID="${BUILD_ID_SHORT}/${BUILD_ID}"
 
 mkdir -p "${BUILD_DIR}"
 if [ $? -ne 0 ] ; then
