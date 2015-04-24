@@ -1,5 +1,4 @@
 http://autobuild.buildroot.org/toolchains/configs/armv5-ctng-linux-gnueabi.config,x86,glibc
-http://autobuild.buildroot.org/toolchains/configs/armv6-ctng-linux-uclibcgnueabi.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/armv7-ctng-linux-gnueabihf.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/bfin-linux-uclibc.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/bfin-uclinux.config,x86,uclibc
@@ -16,19 +15,15 @@ http://autobuild.buildroot.org/toolchains/configs/br-mipsel-o32-full.config,x86,
 http://autobuild.buildroot.org/toolchains/configs/br-powerpc-e500mc-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-powerpc-internal-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-sh4-full.config,x86,uclibc
-http://autobuild.buildroot.org/toolchains/configs/br-x86-64-atom-no-rpc-no-ipv6.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-x86-64-core2-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-xtensa-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-xtensa-full-internal.config,x86,uclibc
-http://autobuild.buildroot.org/toolchains/configs/i486-ctng-linux-uclibc.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/i686-ctng-linux-gnu.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/linaro-aarch64.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/linaro-arm.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/mips64el-ctng_n32-linux-gnu.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/mips64el-ctng_n64-linux-gnu.config,x86,glibc
-http://autobuild.buildroot.org/toolchains/configs/mipsel-ctng-linux-uclibc.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/powerpc-ctng_e500v2-linux-gnuspe.config,x86,glibc
-http://autobuild.buildroot.org/toolchains/configs/powerpc-ctng-linux-uclibc.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-arm-armv4t.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-arm.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-arm-thumb2.config,x86,glibc
