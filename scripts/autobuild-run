@@ -661,7 +661,8 @@ def send_results(result, **kwargs):
 
             for fname in files:
                 if fname == 'config.log':
-                    os.makedirs(dest)
+                    if not os.path.exists(dest):
+                        os.makedirs(dest)
                     shutil.copy(os.path.join(root, fname), os.path.join(dest, fname))
 
     copy_config_log_files()
