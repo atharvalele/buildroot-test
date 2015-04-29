@@ -655,12 +655,14 @@ def send_results(result, **kwargs):
 
         srcroot = os.path.join(outputdir, "build", '-'.join(reason))
         destroot = os.path.join(resultdir, '-'.join(reason))
+        config_files = ('config.log', 'CMakeCache.txt', 'CMakeError.log',
+            'CMakeOutput.log')
 
         for root, dirs, files in os.walk(srcroot):
             dest = os.path.join(destroot, os.path.relpath(root, srcroot))
 
             for fname in files:
-                if fname == 'config.log':
+                if fname in config_files:
                     if not os.path.exists(dest):
                         os.makedirs(dest)
                     shutil.copy(os.path.join(root, fname), os.path.join(dest, fname))
