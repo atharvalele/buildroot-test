@@ -74,17 +74,23 @@ Options:
   -h, --help                     show this help message and exit
   -V, --version                  show version
   -n, --ninstances NINSTANCES    number of parallel instances
+                                 Defaults to %(--ninstances)s.
   -j, --njobs NJOBS              number of parallel jobs
+                                 Defaults to %(--njobs)s.
   -s, --submitter SUBMITTER      name/machine of submitter
+                                 Defaults to %(--submitter)s.
   --http-login LOGIN             username to send results with
+                                 Not set by default.
   --http-password PASSWORD       password to send results with (for security
                                  reasons it is recommended to define this in the
                                  config file instead, with user-read permissions
                                  only)
+                                 Not set by default.
   --make-opts OPTSTRING          string of extra options to pass to Buildroot
                                  make, such as specific command wrappers
-                                 [default: ]
+                                 Empty by default.
   -c, --config CONFIG            path to configuration file
+                                 Not set by default.
 
 Format of the configuration file:
 
@@ -99,11 +105,8 @@ Format of the configuration file:
    http-password = <value>
    submitter = <value>
 
-Default values for the arguments are:
 
-  %s
-""" % '\n  '.join(
-    ['%s = %s' % (key, val) for (key, val) in defaults.items()])
+""" % defaults
 
 __doc__ = doc
 
@@ -842,7 +845,7 @@ def main():
                 http_login = args['--http-login'],
                 http_password = args['--http-password'],
                 submitter = args['--submitter'],
-                make_opts = args['--make-opts'],
+                make_opts = (args['--make-opts'] or ''),
                 upload = upload,
                 buildpid = buildpid
             ))
