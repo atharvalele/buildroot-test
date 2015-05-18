@@ -437,6 +437,22 @@ def fixup_config(**kwargs):
        'BR2_STATIC_LIBS=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
         return False
+    # This MIPS uClibc toolchain fails to build the cdrkit package
+    if 'BR2_PACKAGE_CDRKIT=y\n' in configlines and \
+       'BR2_STATIC_LIBS=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-mipsel-o32-full-2015.02.tar.bz2"\n' in configlines:
+        return False
+    # This x86 uClibc toolchain fails to build the cdrkit package
+    if 'BR2_PACKAGE_CDRKIT=y\n' in configlines and \
+       'BR2_STATIC_LIBS=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-i386-pentium4-full-2015.02.tar.bz2"\n' in configlines:
+        return False
+    # This Xtensa toolchain fails to build kmod (affected by
+    # --gc-section bug, fixed in Xtensa binutils since then but
+    # toolchain not rebuilt yet)
+    if 'BR2_PACKAGE_KMOD=y\n' in configlines and \
+       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-xtensa-full-2015.02.tar.bz2"\n' in configlines:
+        return False
     # uClibc vfork static linking issue
     if 'BR2_PACKAGE_ALSA_LIB=y\n' in configlines and \
        'BR2_STATIC_LIBS=y\n' in configlines and \
