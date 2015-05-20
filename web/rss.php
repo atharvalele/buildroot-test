@@ -26,7 +26,7 @@ $results = bab_get_results(0, 50);
 echo " <items>\n";
 echo "  <rdf:Seq>\n";
 while ($current = mysql_fetch_object($results))
-  echo "<rdf:li rdf:resource=\"http://buildroot.humanoidz.org/results/" .
+  echo "<rdf:li rdf:resource=\"http://autobuild.buildroot.org/results/" .
     $current->identifier . "\"/>\n";
 echo "  </rdf:Seq>\n";
 echo " </items>\n";
@@ -35,7 +35,7 @@ echo "</channel>\n";
 mysql_data_seek($results, 0);
 
 while ($current = mysql_fetch_object($results)) {
-  echo " <item rdf:about=\"http://buildroot.humanoidz.org/results/" .
+  echo " <item rdf:about=\"http://autobuild.buildroot.org/results/" .
     $current->identifier . "\">\n";
 
   if ($current->status == 0)
@@ -46,7 +46,7 @@ while ($current = mysql_fetch_object($results)) {
     $status = "timed out";
 
     echo "  <title>Build " . $status . " at " . $current->builddate . "</title>\n";
-    echo "  <link>http://buildroot.humanoidz.org/results/" .
+    echo "  <link>http://autobuild.buildroot.org/results/" .
       $current->identifier . "</link>\n";
     echo "  <description>\n";
     if ($current->status == 0) {
