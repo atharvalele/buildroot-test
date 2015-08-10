@@ -398,8 +398,6 @@ def fixup_config(**kwargs):
         return False
     if 'BR2_sh2a=y\n' in configlines and  'BR2_PACKAGE_LIBFFI=y\n' in configlines:
         return False
-    if 'BR2_nios2=y\n' in configlines and 'BR2_PACKAGE_LIBFFI=y\n' in configlines:
-        return False
     if 'BR2_PACKAGE_SUNXI_BOARDS=y\n' in configlines:
         configlines.remove('BR2_PACKAGE_SUNXI_BOARDS_FEX_FILE=""\n')
         configlines.append('BR2_PACKAGE_SUNXI_BOARDS_FEX_FILE="a10/hackberry.fex"\n')
@@ -419,39 +417,14 @@ def fixup_config(**kwargs):
     if 'BR2_PACKAGE_PYTHON3=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mips64el-ctng_n64-linux-gnu.tar.xz"\n' in configlines:
         return False
-    # This MIPS uClibc toolchain fails to build the python package
-    if 'BR2_PACKAGE_PYTHON=y\n' in configlines and \
-       'BR2_STATIC_LIBS=y\n' in configlines and \
-       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-mipsel-o32-full-2014.11.tar.bz2"\n' in configlines:
-        return False
     # This MIPS uClibc toolchain fails to build the strace package
     if 'BR2_PACKAGE_STRACE=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
-        return False
-    # This MIPS uClibc toolchain fails to build the strace package
-    if 'BR2_PACKAGE_STRACE=y\n' in configlines and \
-       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-mipsel-o32-full-2014.11.tar.bz2"\n' in configlines:
         return False
     # This MIPS uClibc toolchain fails to build the cdrkit package
     if 'BR2_PACKAGE_CDRKIT=y\n' in configlines and \
        'BR2_STATIC_LIBS=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
-        return False
-    # This MIPS uClibc toolchain fails to build the cdrkit package
-    if 'BR2_PACKAGE_CDRKIT=y\n' in configlines and \
-       'BR2_STATIC_LIBS=y\n' in configlines and \
-       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-mipsel-o32-full-2015.02.tar.bz2"\n' in configlines:
-        return False
-    # This x86 uClibc toolchain fails to build the cdrkit package
-    if 'BR2_PACKAGE_CDRKIT=y\n' in configlines and \
-       'BR2_STATIC_LIBS=y\n' in configlines and \
-       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-i386-pentium4-full-2015.02.tar.bz2"\n' in configlines:
-        return False
-    # This Xtensa toolchain fails to build kmod (affected by
-    # --gc-section bug, fixed in Xtensa binutils since then but
-    # toolchain not rebuilt yet)
-    if 'BR2_PACKAGE_KMOD=y\n' in configlines and \
-       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-xtensa-full-2015.02.tar.bz2"\n' in configlines:
         return False
     # uClibc vfork static linking issue
     if 'BR2_PACKAGE_ALSA_LIB=y\n' in configlines and \
@@ -461,10 +434,6 @@ def fixup_config(**kwargs):
     # This MIPS uClibc toolchain fails to build the weston package
     if 'BR2_PACKAGE_WESTON=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
-        return False
-    # This sh4 toolchain fails to build opencv package
-    if 'BR2_PACKAGE_OPENCV=y\n' in configlines and \
-       'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/br-sh4-full-2015.05.tar.bz2"\n' in configlines:
         return False
 
     with open(os.path.join(outputdir, ".config"), "w+") as configf:
