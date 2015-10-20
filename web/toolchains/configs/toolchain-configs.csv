@@ -22,6 +22,7 @@ http://autobuild.buildroot.org/toolchains/configs/br-powerpc-e500mc-full.config,
 http://autobuild.buildroot.org/toolchains/configs/br-powerpc-internal-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-sh4-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-sparc-glibc.config,x86,glibc
+http://autobuild.buildroot.org/toolchains/configs/br-sparc64-glibc.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-x86-64-core2-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-x86-64-musl.config,x86,musl
 http://autobuild.buildroot.org/toolchains/configs/br-xtensa-full.config,x86,uclibc
