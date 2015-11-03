@@ -13,6 +13,7 @@ http://autobuild.buildroot.org/toolchains/configs/br-arm-full-nothread.config,x8
 http://autobuild.buildroot.org/toolchains/configs/br-arm-full-static.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-arm-internal-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-i386-pentium4-full.config,x86,uclibc
+http://autobuild.buildroot.org/toolchains/configs/br-microblazeel-full.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-microblazeel-full-internal.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-mips64-n64-glibc.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-mipsel-o32-full.config,x86,uclibc
