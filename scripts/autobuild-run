@@ -445,7 +445,8 @@ def fixup_config(**kwargs):
     # 2.24+ on the host.
     if 'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARM=y\n' in configlines and \
        platform.machine() == 'x86_64':
-        glibc_version = subprocess.check_output(["ldd", "--version"]).splitlines()[0].split()[-1]
+        ldd_version_output = subprocess.Popen(['ldd', '--version'], stdout=subprocess.PIPE).communicate()[0]
+        glibc_version = ldd_version_output.splitlines()[0].split()[-1]
         if StrictVersion('2.24') > StrictVersion(glibc_version):
             return False
 
