@@ -125,6 +125,8 @@ import signal
 import subprocess
 import sys
 from time import localtime, strftime
+from distutils.version import StrictVersion
+import platform
 
 if sys.hexversion >= 0x3000000:
     import configparser
@@ -439,6 +441,13 @@ def fixup_config(**kwargs):
     if 'BR2_PACKAGE_WESTON=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
         return False
+    # The latest Linaro toolchains on x86-64 hosts requires glibc
+    # 2.24+ on the host.
+    if 'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARM=y\n' in configlines and \
+       platform.machine() == 'x86_64':
+        glibc_version = subprocess.check_output(["ldd", "--version"]).splitlines()[0].split()[-1]
+        if StrictVersion('2.24') > StrictVersion(glibc_version):
+            return False
 
     with open(os.path.join(outputdir, ".config"), "w+") as configf:
         configf.writelines(configlines)
