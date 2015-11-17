@@ -443,12 +443,14 @@ def fixup_config(**kwargs):
         return False
     # The latest Linaro toolchains on x86-64 hosts requires glibc
     # 2.24+ on the host.
-    if 'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARM=y\n' in configlines and \
-       platform.machine() == 'x86_64':
-        ldd_version_output = subprocess.Popen(['ldd', '--version'], stdout=subprocess.PIPE).communicate()[0]
-        glibc_version = ldd_version_output.splitlines()[0].split()[-1]
-        if StrictVersion('2.24') > StrictVersion(glibc_version):
-            return False
+    if platform.machine() == 'x86_64':
+        if 'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARM=y\n' in configlines or \
+           'BR2_TOOLCHAIN_EXTERNAL_LINARO_AARCH64=y\n' in configlines or \
+           'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARMEB=y\n' in configlines:
+            ldd_version_output = subprocess.Popen(['ldd', '--version'], stdout=subprocess.PIPE).communicate()[0]
+            glibc_version = ldd_version_output.splitlines()[0].split()[-1]
+            if StrictVersion('2.24') > StrictVersion(glibc_version):
+                return False
 
     with open(os.path.join(outputdir, ".config"), "w+") as configf:
         configf.writelines(configlines)
