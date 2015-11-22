@@ -16,6 +16,8 @@ http://autobuild.buildroot.org/toolchains/configs/br-i386-pentium4-full.config,x
 http://autobuild.buildroot.org/toolchains/configs/br-microblazeel-full.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-microblazeel-full-internal.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-mips64-n64-full.config,x86,uclibc
+http://autobuild.buildroot.org/toolchains/configs/br-mips32r6-el-hf-glibc.config,x86,glibc
+http://autobuild.buildroot.org/toolchains/configs/br-mips64r6-el-hf-glibc.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-mipsel-o32-full.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-nios2-glibc.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-powerpc-603e-basic-cpp.config,x86,uclibc
