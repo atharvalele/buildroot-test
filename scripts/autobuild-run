@@ -65,6 +65,7 @@ defaults = {
     '--submitter': 'N/A',
     '--make-opts': '',
     '--nice': 0,
+    '--pid-file': '/tmp/buildroot-autobuild.pid',
 }
 
 doc = """autobuild-run - run Buildroot autobuilder
@@ -92,6 +93,8 @@ Options:
   --make-opts OPTSTRING          string of extra options to pass to Buildroot
                                  make, such as specific command wrappers
                                  Empty by default.
+  --pid-file PATH                path to a file where to store the PID
+                                 Defaults to %(--pid-file)s.
   -c, --config CONFIG            path to configuration file
                                  Not set by default.
 
@@ -806,6 +809,10 @@ def main():
 
     # load in defaults at lowest priority
     args = merge(args, defaults)
+
+    # Save our PID very early, so we can be stopped
+    with open(args['--pid-file'], "w+") as pidf:
+        pidf.write("%d" % os.getpid())
 
     # http_login/password could theoretically be allowed as empty, so check
     # explicitly on None.
