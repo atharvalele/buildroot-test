@@ -64,6 +64,7 @@ defaults = {
     '--njobs': '1',
     '--submitter': 'N/A',
     '--make-opts': '',
+    '--nice': 0,
 }
 
 doc = """autobuild-run - run Buildroot autobuilder
@@ -77,6 +78,8 @@ Options:
                                  Defaults to %(--ninstances)s.
   -j, --njobs NJOBS              number of parallel jobs
                                  Defaults to %(--njobs)s.
+  --nice N                       Niceness, positive number
+                                 Defaults to %(--nice)s.
   -s, --submitter SUBMITTER      name/machine of submitter
                                  Defaults to %(--submitter)s.
   --http-login LOGIN             username to send results with
@@ -101,6 +104,7 @@ Format of the configuration file:
    [main]
    ninstances = <value>
    njobs = <value>
+   nice = <value>
    http-login = <value>
    http-password = <value>
    submitter = <value>
@@ -540,6 +544,7 @@ def do_build(**kwargs):
 
     idir = "instance-%d" % kwargs['instance']
     log = kwargs['log']
+    nice = kwargs['nice']
 
     # We need the absolute path to use with O=, because the relative
     # path to the output directory here is not relative to the
@@ -551,7 +556,9 @@ def do_build(**kwargs):
     f = open(os.path.join(outputdir, "logfile"), "w+")
     log_write(log, "INFO: build started")
 
-    cmd = ["timeout", str(MAX_DURATION), "make", "O=%s" % outputdir,
+    cmd = ["timeout", str(MAX_DURATION),
+            "nice", "-n", nice,
+            "make", "O=%s" % outputdir,
             "-C", srcdir, "BR2_DL_DIR=%s" % dldir,
             "BR2_JLEVEL=%s" % kwargs['njobs']] \
           + kwargs['make_opts'].split()
@@ -851,6 +858,7 @@ def main():
                 http_password = args['--http-password'],
                 submitter = args['--submitter'],
                 make_opts = (args['--make-opts'] or ''),
+                nice = (args['--nice'] or 0),
                 upload = upload,
                 buildpid = buildpid
             ))
