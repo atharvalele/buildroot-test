@@ -335,6 +335,25 @@ def prepare_build(**kwargs):
 def is_toolchain_usable(**kwargs):
     """Check if the toolchain is actually usable."""
 
+    idir = "instance-%d" % kwargs['instance']
+    sysinfo = kwargs['sysinfo']
+
+    outputdir = os.path.join(idir, "output")
+    with open(os.path.join(outputdir, ".config")) as configf:
+        configlines = configf.readlines()
+
+    # The latest Linaro toolchains on x86-64 hosts requires glibc
+    # 2.14+ on the host.
+    if platform.machine() == 'x86_64':
+        if 'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARM=y\n' in configlines or \
+           'BR2_TOOLCHAIN_EXTERNAL_LINARO_AARCH64=y\n' in configlines or \
+           'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARMEB=y\n' in configlines:
+            ldd_version_output = subprocess.Popen(['ldd', '--version'], stdout=subprocess.PIPE).communicate()[0]
+            glibc_version = ldd_version_output.splitlines()[0].split()[-1]
+            if StrictVersion('2.14') > StrictVersion(glibc_version):
+                log_write(log, "WARN: ignoring the Linaro ARM toolchains becausee too old host glibc")
+                return False
+
     return True
 
 def fixup_config(**kwargs):
@@ -453,16 +472,6 @@ def fixup_config(**kwargs):
     if 'BR2_PACKAGE_WESTON=y\n' in configlines and \
        'BR2_TOOLCHAIN_EXTERNAL_URL="http://autobuild.buildroot.org/toolchains/tarballs/mipsel-ctng-linux-uclibc.tar.xz"\n' in configlines:
         return False
-    # The latest Linaro toolchains on x86-64 hosts requires glibc
-    # 2.24+ on the host.
-    if platform.machine() == 'x86_64':
-        if 'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARM=y\n' in configlines or \
-           'BR2_TOOLCHAIN_EXTERNAL_LINARO_AARCH64=y\n' in configlines or \
-           'BR2_TOOLCHAIN_EXTERNAL_LINARO_ARMEB=y\n' in configlines:
-            ldd_version_output = subprocess.Popen(['ldd', '--version'], stdout=subprocess.PIPE).communicate()[0]
-            glibc_version = ldd_version_output.splitlines()[0].split()[-1]
-            if StrictVersion('2.24') > StrictVersion(glibc_version):
-                return False
 
     with open(os.path.join(outputdir, ".config"), "w+") as configf:
         configf.writelines(configlines)
