@@ -1,0 +1,5 @@
+[main]
+ninstances = 4
+njobs = 4
+nice = 19
+submitter = John Doe
