@@ -332,6 +332,11 @@ def prepare_build(**kwargs):
 
     return 0
 
+def is_toolchain_usable(**kwargs):
+    """Check if the toolchain is actually usable."""
+
+    return True
+
 def fixup_config(**kwargs):
     """Finalize the configuration and reject any problematic combinations
 
@@ -514,6 +519,9 @@ def gen_config(**kwargs):
                            (outputdir, srcdir)], shell=True, stdout=devnull, stderr=devnull)
     if ret != 0:
         log_write(log, "ERROR: cannot oldconfig")
+        return -1
+
+    if not is_toolchain_usable(**kwargs):
         return -1
 
     # Now, generate the random selection of packages, and fixup
