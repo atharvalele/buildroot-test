@@ -518,7 +518,14 @@ def gen_config(**kwargs):
 
     # Now, generate the random selection of packages, and fixup
     # things if needed.
+    # Safe-guard, in case we can not quickly come to a valid
+    # configuration: allow at most 100 (arbitrary) iterations.
+    bounded_loop = 100
     while True:
+        if bounded_loop == 0:
+            log_write(log, "ERROR: cannot generate random configuration after 100 iterations")
+            return -1
+        bounded_loop -= 1
         ret = subprocess.call(["make", "O=%s" % outputdir, "-C", srcdir,
                                "KCONFIG_PROBABILITY=%d" % randint(1,30), "randpackageconfig"],
                               stdout=devnull, stderr=devnull)
