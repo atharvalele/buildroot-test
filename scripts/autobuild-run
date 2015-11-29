@@ -337,6 +337,7 @@ def is_toolchain_usable(**kwargs):
 
     idir = "instance-%d" % kwargs['instance']
     sysinfo = kwargs['sysinfo']
+    log = kwargs['log']
 
     outputdir = os.path.join(idir, "output")
     with open(os.path.join(outputdir, ".config")) as configf:
