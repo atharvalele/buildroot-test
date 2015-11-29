@@ -1,0 +1,16 @@
+# The absolute path to chroot into to run the autobuild script.
+# Leave empty to not use a chroot.
+AUTOBUILD_CHROOT="/var/chroot-autobuild"
+
+# The user to run run the autobuild script as.
+# If using a chroot, that user must exist in the chroot.
+AUTOBUILD_USER="buildroot"
+
+# Path to the buildroot-test tree to use.
+# If using a chroot, it will be bind-mounted in the chroot.
+AUTOBUILD_DIR="/home/johndoe/buildroot-test"
+
+# The absolute path to the autobuild work dir.
+# This directory must contain the runtime configuration file for
+# the autobuilder script, in a file name buildroot-autobuild.conf
+AUTOBUILD_BASE_DIR="/home/buildroot/autobuild/"
