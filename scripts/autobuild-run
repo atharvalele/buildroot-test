@@ -585,7 +585,7 @@ def do_build(**kwargs):
     log_write(log, "INFO: build started")
 
     cmd = ["timeout", str(MAX_DURATION),
-            "nice", "-n", nice,
+            "nice", "-n", str(nice),
             "make", "O=%s" % outputdir,
             "-C", srcdir, "BR2_DL_DIR=%s" % dldir,
             "BR2_JLEVEL=%s" % kwargs['njobs']] \
