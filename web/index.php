@@ -35,6 +35,11 @@ if (isset($_GET['reason']) && ereg("^[A-Za-z0-9_\.\-]*$", $_GET['reason']))
 else
   $filter_reason = "";
 
+if (isset ($_GET['submitter']))
+  $filter_submitter = urldecode($_GET['submitter']);
+else
+  $filter_submitter = "";
+
 bab_header("Buildroot tests");
 
 echo "<table>\n";
@@ -43,7 +48,7 @@ echo "<tr class=\"header\">";
 echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch</td><td>Failure reason</td><td>Data</td>";
 echo "</tr>";
 
-$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason);
+$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter);
 
 while ($current = mysql_fetch_object($results)) {
 
@@ -67,7 +72,7 @@ while ($current = mysql_fetch_object($results)) {
     echo "<td><a href=\"?status=TIMEOUT\">TIMEOUT</a></td>";
 
   echo "<td><a href=\"http://git.buildroot.net/buildroot/commit/?id=" . $current->commitid . "\">" . substr($current->commitid, 0, 8) . "</a></td>";
-  echo "<td>" . $submitter . "</td>";
+  echo "<td><a href=\"?submitter=" . urlencode($current->submitter) . "\">" . $submitter . "</a></td>";
   echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a></td>";
   if ($current->reason == "none")
     echo "<td>none</td>";
