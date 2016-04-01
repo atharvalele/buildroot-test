@@ -259,17 +259,34 @@ def get_toolchain_configs():
     configs = []
 
     (_, _, _, _, hostarch) = os.uname()
-    if hostarch == 'i686' or hostarch == 'x86_64':
+    # ~2015 distros report x86 when on a 32bit install
+    if hostarch == 'i686' or hostarch == 'i386' or hostarch == 'x86':
         hostarch = 'x86'
 
     for row in csv.reader(l):
         config = {}
         config["url"] = row[0]
         config["hostarch"] = row[1]
-        # Ignore toolchains that are not built for the appropriate
-        # host architecture
-        if hostarch != config["hostarch"]:
+        keep = False
+
+        # Keep all toolchain configs that work regardless of the host
+        # architecture
+        if config['hostarch'] == "any":
+            keep = True
+
+        # Keep all toolchain configs that can work on the current host
+        # architecture
+        if hostarch == config["hostarch"]:
+            keep = True
+
+        # Assume that x86 32 bits toolchains work on x86_64 build
+        # machines
+        if hostarch == 'x86_64' and config["hostarch"] == "x86":
+            keep = True
+
+        if not keep:
             continue
+
         config["libc"] = row[2]
         with urlopen_closing(config["url"]) as r:
             config["contents"] = decode_byte_list(r.readlines())
