@@ -42,8 +42,6 @@ http://autobuild.buildroot.org/toolchains/configs/sourcery-arm-thumb2.config,x86
 http://autobuild.buildroot.org/toolchains/configs/sourcery-mips64.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-mips.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-nios2.config,x86,glibc
-http://autobuild.buildroot.org/toolchains/configs/sourcery-powerpc.config,x86,glibc
-http://autobuild.buildroot.org/toolchains/configs/sourcery-powerpc-e500v2.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-sh.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-x86-64.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/sourcery-x86.config,x86,glibc
