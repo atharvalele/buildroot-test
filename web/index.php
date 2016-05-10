@@ -30,7 +30,7 @@ if (isset($_GET['arch']) && ereg("^[a-z0-9_]*$", $_GET['arch']))
 else
   $filter_arch = "";
 
-if (isset($_GET['reason']) && ereg("^[A-Za-z0-9_\.\-]*$", $_GET['reason']))
+if (isset($_GET['reason']) && ereg("^[A-Za-z0-9_\+\.\-]*$", $_GET['reason']))
   $filter_reason = $_GET['reason'];
 else
   $filter_reason = "";
@@ -77,7 +77,7 @@ while ($current = mysql_fetch_object($results)) {
   if ($current->reason == "none")
     echo "<td>none</td>";
   else
-    echo "<td><a href=\"?reason=" . $current->reason . "\">" . $current->reason . "</td>";
+    echo "<td><a href=\"?reason=" . urlencode($current->reason) . "\">" . $current->reason . "</td>";
 
   echo "<td>";
   echo "<a href=\"" . bab_get_path($current->identifier) . "/\">dir</a>, ";
