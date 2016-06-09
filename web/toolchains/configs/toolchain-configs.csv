@@ -14,6 +14,7 @@ http://autobuild.buildroot.org/toolchains/configs/br-arm-full-nothread.config,x8
 http://autobuild.buildroot.org/toolchains/configs/br-arm-full-static.config,x86_64,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-arm-internal-full.config,any,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-i386-pentium4-full.config,x86_64,uclibc
+http://autobuild.buildroot.org/toolchains/configs/br-i386-pentium-mmx-musl.config,x86_64,musl
 http://autobuild.buildroot.org/toolchains/configs/br-m68k-5208-full.config,x86_64,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-m68k-68040-full.config,x86_64,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-microblazeel-full.config,x86_64,glibc
