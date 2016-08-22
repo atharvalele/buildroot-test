@@ -1,0 +1,226 @@
+#!/usr/bin/env python
+
+import _mysql
+import sys
+import os
+import textwrap
+import smtplib
+from email.mime.text import MIMEText
+from datetime import date, timedelta
+import localconfig
+
+sys.path.append(os.path.join(localconfig.brbase, "support", "scripts"))
+import getdeveloperlib
+
+baseurl = "autobuild.buildroot.net"
+http_baseurl = "http://" + baseurl
+
+developers = getdeveloperlib.parse_developers(localconfig.brbase)
+
+# Find, for the previous day, the global statistics: number of
+# success, failures, timeouts, and total number of builds.
+def get_overall_stats(db, datestr):
+    db.query("""select status,count(id) as count from results
+    where date(builddate) = '%s' group by status""" % datestr)
+    r = db.use_result()
+    result = dict(r.fetch_row(maxrows=0))
+    success = int(result['0'])
+    failures = int(result['1'])
+    timeouts = int(result['2'])
+    total = success + failures + timeouts
+    return (success, failures, timeouts, total)
+
+class Notification:
+    def __init__(self):
+        self.arch_notifications = []
+        self.package_notifications = []
+
+# Calculate the list of .mk files in the Buildroot source tree, will
+# be used to guess the name of the packages that caused build
+# failures.
+def get_mklist(basepath):
+    mklist = []
+    for root, dirs, files in os.walk(basepath):
+        for f in files:
+            if not f.endswith(".mk"):
+                continue
+            mklist.append(os.path.splitext(f)[0])
+    return mklist
+
+mklist = get_mklist(localconfig.brbase)
+
+# Add to the notifications{} dict notifications that are related to
+# architecture "maintainers".
+def add_arch_notification(notifications, build_result):
+    arch = build_result['arch']
+    for dev in developers:
+        if arch not in dev.architectures:
+            continue
+        if dev in notifications:
+            n = notifications[dev]
+        else:
+            n = Notification()
+            notifications[dev] = n
+        n.arch_notifications.append(build_result)
+
+# Given a failure reason as provided by the autobuilders, tries to
+# find the corresponding package by stripping progressively the last
+# "-<something>" parts of the failure reason. A failure reason like
+# "qt5location-5.6.1-1" will first attempt to find a package named
+# "qt5location-5.6.1" (which will not find any match) and then attempt
+# to find a package named "qt5location" (which will match an existing
+# package).
+def find_package(reason):
+    if reason == "unknown":
+        return
+    # Strip a first component of the version
+    while "-" in reason:
+        reason = reason[:reason.rindex("-")]
+        if reason in mklist:
+            return reason
+    return None
+
+# Add to the notifications{} dict notifications that are related to
+# package "maintainers".
+def add_package_notification(notifications, build_result):
+    pkg = find_package(build_result['reason'])
+    if not pkg:
+        return
+    for dev in developers:
+        if pkg not in dev.packages:
+            continue
+        if dev in notifications:
+            n = notifications[dev]
+        else:
+            n = Notification()
+            notifications[dev] = n
+        n.package_notifications.append(build_result)
+
+def show_results(results, show_status):
+    contents = ""
+    for r in results:
+        arch = r['arch']
+        reason = r['reason']
+        if len(reason) > 30:
+            reason = reason[0:27] + "..."
+        status = int(r['status'])
+        if status == 1:
+            status_str = "NOK"
+        elif status == 2:
+            status_str = "TIM"
+        url = http_baseurl + "/results/" + r['identifier']
+        if show_status:
+            contents += "%12s | %30s | %3s | %40s\n" % (arch, reason, status_str, url)
+        else:
+            contents += "%12s | %30s | %40s\n" % (arch, reason, url)
+    return contents
+
+# Send the e-mails to the individual developers
+def developers_email(smtp, notifications, datestr):
+    for k, v in notifications.iteritems():
+        # to = k.name
+        to = "thomas@free-electrons.com"
+        email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
+        subject = "[%s] Your build results for %s" % (baseurl, datestr)
+        contents = "Hello,\n\n"
+        contents += textwrap.fill("This is the list of Buildroot build failures that occured on %s, and for which you are a registered architecture developer or package developer. Please help us improving the quality of Buildroot by investigating those build failures and sending patches to fix them. Thanks!" % datestr)
+        contents += "\n\n"
+        if len(v.arch_notifications) != 0:
+            contents += "Build failures related to your architectures:\n\n"
+            contents += show_results(v.arch_notifications, show_status=False)
+            contents += "\n\n"
+        if len(v.package_notifications) != 0:
+            contents += "Build failures related to your packages:\n\n"
+            contents += show_results(v.package_notifications, show_status=False)
+        contents += "\n"
+        contents += "-- \n"
+        contents += http_baseurl
+        msg = MIMEText(contents)
+        msg['Subject'] = subject
+        msg['To'] = to
+        msg['From'] = email_from
+        smtp.sendmail(email_from, to, msg.as_string())
+        print "To: %s" % k.name
+
+# Send the global e-mail to the mailing list
+def global_email(smtp, results, results_by_reason, datestr, overall):
+    # to = "buildroot@buildroot.net"
+    to = "thomas@free-electrons.com"
+    email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
+    subject = "[%s] Build results for %s" % (baseurl, datestr)
+    contents = "Hello,\n\n"
+    contents += "Build statistics for %s\n" % datestr
+    contents += "================================\n\n"
+    contents += "%15s : %-3d\n" % ("successes", overall[0])
+    contents += "%15s : %-3d\n" % ("failures", overall[1])
+    contents += "%15s : %-3d\n" % ("timeouts", overall[2])
+    contents += "%15s : %-3d\n" % ("TOTAL", overall[3])
+    contents += "\n"
+    contents += "Classification of failures by reason\n"
+    contents += "====================================\n\n"
+    for r in results_by_reason:
+        reason = r['reason']
+        if len(reason) > 30:
+            reason = reason[0:27] + "..."
+        count = int(r['reason_count'])
+        contents += "%30s | %-2d\n" % (reason, count)
+    contents += "\n\n"
+    contents += "Detail of failures\n"
+    contents += "===================\n\n"
+    contents += show_results(results, show_status=True)
+    contents += "\n"
+    contents += "-- \n"
+    contents += http_baseurl
+    msg = MIMEText(contents)
+    msg['Subject'] = subject
+    msg['To'] = to
+    msg['From'] = email_from
+    smtp.sendmail(email_from, [to], msg.as_string())
+    print "To: buildroot@buildroot.net"
+
+# Get the list of build failures for the past day
+def get_build_results(db, datestr):
+    db.query("""select * from results
+    where date(builddate) = '%s' and status != 0 order by reason""" % datestr)
+    r = db.use_result()
+    return r.fetch_row(how=1, maxrows=0)
+
+def get_build_results_grouped_by_reason(db, datestr):
+    db.query("""select reason,count(id) as reason_count from results
+    where date(builddate) = '%s' and status != 0
+    group by reason order by reason_count desc, reason""" % datestr)
+    r = db.use_result()
+    return r.fetch_row(how=1, maxrows=0)
+
+# Prepare the notifications{} dict for the notifications to individual
+# developers, based on architecture developers and package
+# developers
+def calculate_notifications(results):
+    notifications = {}
+    for result in results:
+        status = int(result['status'])
+        if status != 1:
+            continue
+        add_arch_notification(notifications, result)
+        add_package_notification(notifications, result)
+    return notifications
+
+def __main__():
+    yesterday = date.today() - timedelta(1)
+    yesterday_str = yesterday.strftime('%Y-%m-%d')
+
+    db = _mysql.connect(host=localconfig.host,
+                        user=localconfig.user,
+                        passwd=localconfig.passwd,
+                        db=localconfig.db)
+    (success, failures, timeouts, total) = get_overall_stats(db, yesterday_str)
+    results = get_build_results(db, yesterday_str)
+    results_by_reason = get_build_results_grouped_by_reason(db, yesterday_str)
+    notifications = calculate_notifications(results)
+    smtp = smtplib.SMTP('localhost')
+    developers_email(smtp, notifications, yesterday_str)
+    global_email(smtp, results, results_by_reason, yesterday_str,
+                 (success, failures, timeouts, total))
+    smtp.quit()
+
+__main__()
