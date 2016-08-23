@@ -143,7 +143,7 @@ def developers_email(smtp, notifications, datestr):
 
 # Send the global e-mail to the mailing list
 def global_email(smtp, results, results_by_reason, datestr, overall):
-    to = "buildroot@buildroot.net"
+    to = "buildroot@buildroot.org"
     email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
     subject = "[%s] Build results for %s" % (baseurl, datestr)
     contents = "Hello,\n\n"
