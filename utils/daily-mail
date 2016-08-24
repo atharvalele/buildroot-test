@@ -24,9 +24,18 @@ def get_overall_stats(db, datestr):
     where date(builddate) = '%s' group by status""" % datestr)
     r = db.use_result()
     result = dict(r.fetch_row(maxrows=0))
-    success = int(result['0'])
-    failures = int(result['1'])
-    timeouts = int(result['2'])
+    if '0' in result:
+        success = int(result['0'])
+    else:
+        success = 0
+    if '1' in result:
+        failures = int(result['1'])
+    else:
+        failures = 0
+    if '2' in result:
+        timeouts = int(result['2'])
+    else:
+        timeouts = 0
     total = success + failures + timeouts
     return (success, failures, timeouts, total)
 
