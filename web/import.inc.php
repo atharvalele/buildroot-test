@@ -93,12 +93,6 @@ function import_result($buildid, $filename)
     $submitter  = trim(file_get_contents($thisbuildfinaldir . "submitter", "r"));
     $commitid  = trim(file_get_contents($thisbuildfinaldir . "gitid", "r"));
 
-    /* Temporarily disable build results from Andre Hentschel */
-    if ($submitter == "Andre Hentschel") {
-	    echo "Reject result from bogus build machine";
-	    return;
-    }
-
     /* Get the architecture from the configuration file */
     $archarray = array();
     exec("grep ^BR2_ARCH= " . $thisbuildfinaldir . "config | sed 's,BR2_ARCH=\"\(.*\)\",\\1,'", $archarray);
