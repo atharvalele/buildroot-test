@@ -66,6 +66,7 @@ defaults = {
     '--make-opts': '',
     '--nice': 0,
     '--pid-file': '/tmp/buildroot-autobuild.pid',
+    '--http-url': 'http://autobuild.buildroot.org/submit/',
 }
 
 doc = """autobuild-run - run Buildroot autobuilder
@@ -83,6 +84,8 @@ Options:
                                  Defaults to %(--nice)s.
   -s, --submitter SUBMITTER      name/machine of submitter
                                  Defaults to %(--submitter)s.
+  --http-url URL                 URL of resource to submit your results.
+                                 Defaults to $(--http-url)s.
   --http-login LOGIN             username to send results with
                                  Not set by default.
   --http-password PASSWORD       password to send results with (for security
@@ -764,7 +767,7 @@ def send_results(result, **kwargs):
                                "-H", "Expect:",
                                "-F", "uploadedfile=@%s" % os.path.join(outputdir, "results.tar.bz2"),
                                "-F", "uploadsubmit=1",
-                               "http://autobuild.buildroot.org/submit/"],
+                               kwargs['http_url']],
                               stdout=log, stderr=log)
         if ret != 0:
             log_write(log, "INFO: results could not be submitted, %d" % ret)
@@ -909,6 +912,7 @@ def main():
                 instance = i,
                 njobs = args['--njobs'],
                 sysinfo = sysinfo,
+                http_url = args['--http-url'],
                 http_login = args['--http-login'],
                 http_password = args['--http-password'],
                 submitter = args['--submitter'],
