@@ -107,6 +107,11 @@ function import_result($buildid, $filename)
 	    }
     }
 
+    $static = 0;
+    exec("grep -q '^BR2_STATIC_LIBS=y$' .config", $out, $ret);
+    if ($ret == 0)
+	    $static = 1;
+
     if ($status == 0)
       $reason = "none";
     else {
@@ -121,7 +126,7 @@ function import_result($buildid, $filename)
     $db = new db();
 
     /* Insert into the database */
-    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc) values (" .
+    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc, static) values (" .
       $db->quote_smart($status) . "," .
       $db->quote_smart($builddate) . "," .
       $db->quote_smart($submitter) . "," .
@@ -129,8 +134,9 @@ function import_result($buildid, $filename)
       $db->quote_smart($buildid) . "," .
       $db->quote_smart($arch) . "," .
       $db->quote_smart($reason) . "," .
-      $db->quote_smart($found_libc) .
-      ")";
+      $db->quote_smart($found_libc) . "," .
+      $db->quote_smart($static) .
+    ")";
 
     $ret = $db->query($sql);
     if ($ret == FALSE) {
