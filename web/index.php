@@ -45,7 +45,7 @@ bab_header("Buildroot tests");
 echo "<table>\n";
 
 echo "<tr class=\"header\">";
-echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch</td><td>Failure reason</td><td>Libc</td><td>Data</td>";
+echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
 echo "</tr>";
 
 $results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter);
@@ -85,6 +85,14 @@ while ($current = mysql_fetch_object($results)) {
   }
 
   echo "<td>" . $current->libc . "</td>";
+
+  if ($current->static == 0) {
+	  $display_static = "N";
+  } else if ($current->static == 1) {
+	  $display_static = "Y";
+  }
+
+  echo "<td>" . $display_static . "</td>";
 
   echo "<td>";
   echo "<a href=\"" . bab_get_path($current->identifier) . "/\">dir</a>, ";
