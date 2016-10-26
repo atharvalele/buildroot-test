@@ -86,7 +86,9 @@ while ($current = mysql_fetch_object($results)) {
 
   echo "<td>" . $current->libc . "</td>";
 
-  if ($current->static == 0) {
+  if (is_null($current->static)) {
+	  $display_static = "";
+  } else if ($current->static == 0) {
 	  $display_static = "N";
   } else if ($current->static == 1) {
 	  $display_static = "Y";
