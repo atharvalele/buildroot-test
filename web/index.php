@@ -76,8 +76,13 @@ while ($current = mysql_fetch_object($results)) {
   echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a></td>";
   if ($current->reason == "none")
     echo "<td>none</td>";
-  else
-    echo "<td><a href=\"?reason=" . urlencode($current->reason) . "\">" . $current->reason . "</td>";
+  else {
+     $display_reason = $current->reason;
+     if (strlen($display_reason) > 30) {
+         $display_reason = substr($display_reason, 0, 27) . "...";
+     }
+     echo "<td><a href=\"?reason=" . urlencode($current->reason) . "\">" . $display_reason . "</td>";
+  }
 
   echo "<td>";
   echo "<a href=\"" . bab_get_path($current->identifier) . "/\">dir</a>, ";
