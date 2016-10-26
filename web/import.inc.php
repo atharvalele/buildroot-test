@@ -98,6 +98,15 @@ function import_result($buildid, $filename)
     exec("grep ^BR2_ARCH= " . $thisbuildfinaldir . "config | sed 's,BR2_ARCH=\"\(.*\)\",\\1,'", $archarray);
     $arch = $archarray[0];
 
+    $found_libc = "";
+    foreach (array("glibc", "uclibc", "musl") as $libc) {
+	    exec("grep -q '^BR2_TOOLCHAIN_USES_" . strtoupper($libc) . "=y$' .config", $out, $ret);
+	    if ($ret == 0) {
+		    $found_libc = $libc;
+		    break;
+	    }
+    }
+
     if ($status == 0)
       $reason = "none";
     else {
@@ -112,14 +121,15 @@ function import_result($buildid, $filename)
     $db = new db();
 
     /* Insert into the database */
-    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason) values (" .
+    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc) values (" .
       $db->quote_smart($status) . "," .
       $db->quote_smart($builddate) . "," .
       $db->quote_smart($submitter) . "," .
       $db->quote_smart($commitid) . "," .
       $db->quote_smart($buildid) . "," .
       $db->quote_smart($arch) . "," .
-      $db->quote_smart($reason) .
+      $db->quote_smart($reason) . "," .
+      $db->quote_smart($found_libc) .
       ")";
 
     $ret = $db->query($sql);
