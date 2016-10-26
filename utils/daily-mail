@@ -82,6 +82,9 @@ def add_arch_notification(notifications, build_result):
 def find_package(reason):
     if reason == "unknown":
         return
+    # Strip host- prefix so that host packages can match
+    if reason.startswith("host-"):
+        reason = reason[5:]
     # Strip a first component of the version
     while "-" in reason:
         reason = reason[:reason.rindex("-")]
