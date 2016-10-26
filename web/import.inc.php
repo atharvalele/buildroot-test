@@ -93,14 +93,16 @@ function import_result($buildid, $filename)
     $submitter  = trim(file_get_contents($thisbuildfinaldir . "submitter", "r"));
     $commitid  = trim(file_get_contents($thisbuildfinaldir . "gitid", "r"));
 
+    $configpath = $thisbuildfinaldir . "config";
+
     /* Get the architecture from the configuration file */
     $archarray = array();
-    exec("grep ^BR2_ARCH= " . $thisbuildfinaldir . "config | sed 's,BR2_ARCH=\"\(.*\)\",\\1,'", $archarray);
+    exec("grep ^BR2_ARCH= " . $configpath . " | sed 's,BR2_ARCH=\"\(.*\)\",\\1,'", $archarray);
     $arch = $archarray[0];
 
     $found_libc = "";
     foreach (array("glibc", "uclibc", "musl") as $libc) {
-	    exec("grep -q '^BR2_TOOLCHAIN_USES_" . strtoupper($libc) . "=y$' .config", $out, $ret);
+	    exec("grep -q '^BR2_TOOLCHAIN_USES_" . strtoupper($libc) . "=y$' " . $configpath, $out, $ret);
 	    if ($ret == 0) {
 		    $found_libc = $libc;
 		    break;
@@ -108,7 +110,7 @@ function import_result($buildid, $filename)
     }
 
     $static = 0;
-    exec("grep -q '^BR2_STATIC_LIBS=y$' .config", $out, $ret);
+    exec("grep -q '^BR2_STATIC_LIBS=y$' " . $configpath, $out, $ret);
     if ($ret == 0)
 	    $static = 1;
 
