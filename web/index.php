@@ -45,6 +45,11 @@ if (isset($_GET['static']) && ereg("^[0-1]$", $_GET['static']))
 else
   $filter_static = "";
 
+if (isset($_GET['subarch']) && ereg("^[A-Za-z0-9_\+\.\-]*$", $_GET['subarch']))
+  $filter_subarch = $_GET['subarch'];
+else
+  $filter_subarch = "";
+
 if (isset ($_GET['submitter']))
   $filter_submitter = urldecode($_GET['submitter']);
 else
@@ -55,10 +60,10 @@ bab_header("Buildroot tests");
 echo "<table>\n";
 
 echo "<tr class=\"header\">";
-echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
+echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch/Subarch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
 echo "</tr>";
 
-$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc, $filter_static);
+$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc, $filter_static, $filter_subarch);
 
 while ($current = mysql_fetch_object($results)) {
 
@@ -83,7 +88,10 @@ while ($current = mysql_fetch_object($results)) {
 
   echo "<td><a href=\"http://git.buildroot.net/buildroot/commit/?id=" . $current->commitid . "\">" . substr($current->commitid, 0, 8) . "</a></td>";
   echo "<td><a href=\"?submitter=" . urlencode($current->submitter) . "\">" . $submitter . "</a></td>";
-  echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a></td>";
+  echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a>";
+  if ($current->subarch != "")
+    echo "/ <a href=\"?subarch=" . $current->subarch . "\">" . $current->subarch . "</a>";
+  echo "</td>";
   if ($current->reason == "none")
     echo "<td>none</td>";
   else {
