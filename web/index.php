@@ -90,7 +90,7 @@ while ($current = mysql_fetch_object($results)) {
   echo "<td><a href=\"?submitter=" . urlencode($current->submitter) . "\">" . $submitter . "</a></td>";
   echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a>";
   if ($current->subarch != "")
-    echo "/ <a href=\"?subarch=" . $current->subarch . "\">" . $current->subarch . "</a>";
+    echo " / <a href=\"?subarch=" . $current->subarch . "\">" . $current->subarch . "</a>";
   echo "</td>";
   if ($current->reason == "none")
     echo "<td>none</td>";
