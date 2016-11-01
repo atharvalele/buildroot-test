@@ -128,7 +128,7 @@ def show_results(results, show_status):
     return contents
 
 # Send the e-mails to the individual developers
-def developers_email(smtp, notifications, datestr):
+def developers_email(smtp, notifications, datestr, dry_run):
     for k, v in notifications.iteritems():
         to = k.name
         email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
@@ -146,15 +146,24 @@ def developers_email(smtp, notifications, datestr):
         contents += "\n"
         contents += "-- \n"
         contents += http_baseurl
-        msg = MIMEText(contents)
-        msg['Subject'] = subject
-        msg['To'] = to
-        msg['From'] = email_from
-        smtp.sendmail(email_from, to, msg.as_string())
-        print "To: %s" % k.name
+        if dry_run:
+            print "====================================================="
+            print "To: %s" % to
+            print "From: %s" % email_from
+            print "Subject: %s" % subject
+            print
+            print contents
+            print "====================================================="
+        else:
+            msg = MIMEText(contents)
+            msg['Subject'] = subject
+            msg['To'] = to
+            msg['From'] = email_from
+            smtp.sendmail(email_from, to, msg.as_string())
+            print "To: %s" % k.name
 
 # Send the global e-mail to the mailing list
-def global_email(smtp, results, results_by_reason, datestr, overall):
+def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
     to = "buildroot@buildroot.org"
     email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
     subject = "[%s] Build results for %s" % (baseurl, datestr)
@@ -181,12 +190,21 @@ def global_email(smtp, results, results_by_reason, datestr, overall):
     contents += "\n"
     contents += "-- \n"
     contents += http_baseurl
-    msg = MIMEText(contents)
-    msg['Subject'] = subject
-    msg['To'] = to
-    msg['From'] = email_from
-    smtp.sendmail(email_from, [to], msg.as_string())
-    print "To: buildroot@buildroot.net"
+    if dry_run:
+        print "====================================================="
+        print "To: %s" % to
+        print "From: %s" % email_from
+        print "Subject: %s" % subject
+        print
+        print contents
+        print "====================================================="
+    else:
+        msg = MIMEText(contents)
+        msg['Subject'] = subject
+        msg['To'] = to
+        msg['From'] = email_from
+        smtp.sendmail(email_from, [to], msg.as_string())
+        print "To: buildroot@buildroot.net"
 
 # Get the list of build failures for the past day
 def get_build_results(db, datestr):
@@ -227,10 +245,13 @@ def __main__():
     results = get_build_results(db, yesterday_str)
     results_by_reason = get_build_results_grouped_by_reason(db, yesterday_str)
     notifications = calculate_notifications(results)
+    dry_run = False
+    if len(sys.argv) == 2 and sys.argv[1] == "--dry-run":
+        dry_run = True
     smtp = smtplib.SMTP('localhost')
-    developers_email(smtp, notifications, yesterday_str)
+    developers_email(smtp, notifications, yesterday_str, dry_run)
     global_email(smtp, results, results_by_reason, yesterday_str,
-                 (success, failures, timeouts, total))
+                 (success, failures, timeouts, total), dry_run)
     smtp.quit()
 
 __main__()
