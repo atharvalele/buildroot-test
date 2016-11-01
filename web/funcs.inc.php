@@ -52,7 +52,7 @@ function bab_total_results_count()
  * and limited to $count items. The items starting with $start=0 are
  * the most recent build results.
  */
-function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="", $filter_reason="", $filter_submitter="")
+function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="", $filter_reason="", $filter_submitter="", $filter_libc="")
 {
   $db = new db();
   $where_parts = array();
@@ -64,6 +64,8 @@ function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="
     $where_parts[] = " reason=" . $db->quote_smart($filter_reason) . " ";
   if ($filter_submitter != '')
     $where_parts[] = " submitter=" . $db->quote_smart($filter_submitter) . " ";
+  if ($filter_libc != '')
+    $where_parts[] = " libc=" . $db->quote_smart($filter_libc) . " ";
   if (count($where_parts)) {
     $condition = "where " . implode("and", $where_parts);
   }

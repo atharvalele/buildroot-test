@@ -35,6 +35,11 @@ if (isset($_GET['reason']) && ereg("^[A-Za-z0-9_\+\.\-]*$", $_GET['reason']))
 else
   $filter_reason = "";
 
+if (isset($_GET['libc']) && ereg("^[a-z]*$", $_GET['libc']))
+  $filter_libc = $_GET['libc'];
+else
+  $filter_libc = "";
+
 if (isset ($_GET['submitter']))
   $filter_submitter = urldecode($_GET['submitter']);
 else
@@ -48,7 +53,7 @@ echo "<tr class=\"header\">";
 echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
 echo "</tr>";
 
-$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter);
+$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc);
 
 while ($current = mysql_fetch_object($results)) {
 
