@@ -27,6 +27,60 @@ function parse_config($path) {
 	return array($opts_set, $opts_unset);
 }
 
+function insert_all_symbols($db, $opts)
+{
+	$sql = "insert ignore into config_symbol (name, value) values ";
+
+	$opts_array = array_map(function($k, $v) {
+			return "(\"" . $k . "\", \"" . $v . "\")";
+		}, array_keys($opts), $opts);
+
+	$sql .= join(",", $opts_array) . ";";
+
+	$db->query($sql);
+}
+
+function get_all_symbols_id($db, $opts)
+{
+	$sql = "select id from config_symbol where ";
+
+	$opts_array = array_map(function($k, $v) {
+			return "(name=\"" . $k . "\" and value=\"" . $v . "\")";
+		}, array_keys($opts), $opts);
+
+	$sql .= join(" or ", $opts_array) . ";";
+
+	$result = $db->query($sql);
+
+	$symbolids = array();
+	while($row = mysql_fetch_array($result)) {
+		array_push($symbolids, $row["id"]);
+	}
+
+	return $symbolids;
+}
+
+function insert_symbol_result($db, $resultid, $symbolsid)
+{
+	$sql = "insert into symbol_per_result (result_id, symbol_id) values ";
+	$symarray = array_map(function($v) use ($resultid) {
+			return "(" . $resultid . "," . $v . ")";
+		}, $symbolsid);
+	$sql .= join(",", $symarray) . ";";
+	$db->query($sql);
+}
+
+function insert_config($db, $resultid, $opts_set)
+{
+	/* Only keep the options with non-empty values */
+	$opts = array_filter($opts_set, function($v) {
+			return $v != "";
+		});
+	insert_all_symbols($db, $opts);
+	$symbolsid = get_all_symbols_id($db, $opts);
+	insert_symbol_result($db, $resultid, $symbolsid);
+}
+
 function import_result($buildid, $filename)
 {
     global $maindir;
@@ -205,6 +259,8 @@ function import_result($buildid, $filename)
       $db->query("delete from results_config where resultid=$resultdbid");
       return;
     }
+
+    insert_config($db, $resultdbid, $opts_set);
 
     echo "Build result accepted. Thanks!";
 }
