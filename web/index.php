@@ -89,7 +89,7 @@ while ($current = mysql_fetch_object($results)) {
      echo "<td><a href=\"?reason=" . urlencode($current->reason) . "\">" . $display_reason . "</td>";
   }
 
-  echo "<td>" . $current->libc . "</td>";
+  echo "<td><a href=\"?libc=" . $current->libc . "\">" . $current->libc . "</a></td>";
 
   if (is_null($current->static)) {
 	  $display_static = "";
