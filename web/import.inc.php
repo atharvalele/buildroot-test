@@ -2,6 +2,29 @@
 include(dirname(__FILE__) . "/../web/config.inc.php");
 include(dirname(__FILE__) . "/../web/db.inc.php");
 
+function parse_config($path) {
+	$opts_set = array();
+	$opts_unset = array();
+
+	$configf = fopen($path, "r");
+	while (!feof($configf)) {
+		$line = trim(fgets($configf));
+		if (!strncmp($line, "BR2_", strlen("BR2_"))) {
+			preg_match("/(BR2_[a-zA-Z0-9_]*)=(.*)/", $line, $matches);
+			$name = $matches[1];
+			$value = str_replace('"', '', $matches[2]);
+			$opts_set[$name] = $value;
+		}
+		else if (!strncmp($line, "# BR2_", strlen("# BR2_"))) {
+			preg_match("/# (BR2_[a-zA-Z0-9_]*) is not set/", $line, $matches);
+			$name = $matches[1];
+			$opts_unset[$name] = "";
+		}
+	}
+
+	return array($opts_set, $opts_unset);
+}
+
 function import_result($buildid, $filename)
 {
     global $maindir;
@@ -93,25 +116,20 @@ function import_result($buildid, $filename)
     $submitter  = trim(file_get_contents($thisbuildfinaldir . "submitter", "r"));
     $commitid  = trim(file_get_contents($thisbuildfinaldir . "gitid", "r"));
 
-    $configpath = $thisbuildfinaldir . "config";
+    list($opts_set, $opts_unset) = parse_config($thisbuildfinaldir . "config");
 
-    /* Get the architecture from the configuration file */
-    $archarray = array();
-    exec("grep ^BR2_ARCH= " . $configpath . " | sed 's,BR2_ARCH=\"\(.*\)\",\\1,'", $archarray);
-    $arch = $archarray[0];
+    $arch = $opts_set["BR2_ARCH"];
 
     $found_libc = "";
     foreach (array("glibc", "uclibc", "musl") as $libc) {
-	    exec("grep -q '^BR2_TOOLCHAIN_USES_" . strtoupper($libc) . "=y$' " . $configpath, $out, $ret);
-	    if ($ret == 0) {
+	    if (array_key_exists("BR2_TOOLCHAIN_USES_" . strtoupper($libc), $opts_set)) {
 		    $found_libc = $libc;
 		    break;
 	    }
     }
 
     $static = 0;
-    exec("grep -q '^BR2_STATIC_LIBS=y$' " . $configpath, $out, $ret);
-    if ($ret == 0)
+    if (array_key_exists("BR2_STATIC_LIBS", $opts_set))
 	    $static = 1;
 
     if ($status == 0)
@@ -149,33 +167,24 @@ function import_result($buildid, $filename)
 
     $resultdbid = $db->insertid();
 
-    $configf = fopen($thisbuildfinaldir . "config", "r");
-
     $sql = "insert into results_config (resultid, isset, name, value) values\n";
 
-    while (!feof($configf)) {
-      $line = trim(fgets($configf));
-      if (!strncmp($line, "BR2_", strlen("BR2_"))) {
-	preg_match("/(BR2_[a-zA-Z0-9_]*)=(.*)/", $line, $matches);
-	$name = $matches[1];
-	$value = str_replace('"', '', $matches[2]);
+    foreach ($opts_set as $k => $v) {
 	$sql .= "(" .
 	  $db->quote_smart($resultdbid) . "," .
 	  "1," .
-	  $db->quote_smart($name) . "," .
-	  $db->quote_smart($value) .
+	  $db->quote_smart($k) . "," .
+	  $db->quote_smart($v) .
 	  "),\n";
-      }
-      else if (!strncmp($line, "# BR2_", strlen("# BR2_"))) {
-	preg_match("/# (BR2_[a-zA-Z0-9_]*) is not set/", $line, $matches);
-	$name = $matches[1];
+    }
+
+    foreach ($opts_unset as $k) {
 	$sql .= "(" .
 	  $db->quote_smart($resultdbid) . "," .
 	  "0," .
-	  $db->quote_smart($name) . "," .
+	  $db->quote_smart($k) . "," .
 	  "''" .
 	  "),\n";
-      }
     }
 
     $sql[strlen($sql)-2] = ';';
