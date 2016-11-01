@@ -119,6 +119,12 @@ function import_result($buildid, $filename)
     list($opts_set, $opts_unset) = parse_config($thisbuildfinaldir . "config");
 
     $arch = $opts_set["BR2_ARCH"];
+    $subarch = "";
+
+    if (array_key_exists("BR2_GCC_TARGET_CPU", $opts_set))
+	    $subarch = $opts_set["BR2_GCC_TARGET_CPU"];
+    else if (array_key_exists("BR2_GCC_TARGET_ARCH", $opts_set))
+	    $subarch = $opts_set["BR2_GCC_TARGET_ARCH"];
 
     $found_libc = "";
     foreach (array("glibc", "uclibc", "musl") as $libc) {
@@ -146,7 +152,7 @@ function import_result($buildid, $filename)
     $db = new db();
 
     /* Insert into the database */
-    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc, static) values (" .
+    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc, static, subarch) values (" .
       $db->quote_smart($status) . "," .
       $db->quote_smart($builddate) . "," .
       $db->quote_smart($submitter) . "," .
@@ -155,7 +161,8 @@ function import_result($buildid, $filename)
       $db->quote_smart($arch) . "," .
       $db->quote_smart($reason) . "," .
       $db->quote_smart($found_libc) . "," .
-      $db->quote_smart($static) .
+      $db->quote_smart($static) . "," .
+      $db->quote_smart($subarch) .
     ")";
 
     $ret = $db->query($sql);
