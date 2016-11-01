@@ -104,7 +104,7 @@ while ($current = mysql_fetch_object($results)) {
 	  $display_static = "Y";
   }
 
-  echo "<td>" . $display_static . "</td>";
+  echo "<td><a href=\"?static=" . $current->static . "\">" . $display_static . "</a></td>";
 
   echo "<td>";
   echo "<a href=\"" . bab_get_path($current->identifier) . "/\">dir</a>, ";
