@@ -22,6 +22,8 @@ function parse_config($path) {
 		}
 	}
 
+	fclose($configf);
+
 	return array($opts_set, $opts_unset);
 }
 
@@ -203,8 +205,6 @@ function import_result($buildid, $filename)
       $db->query("delete from results_config where resultid=$resultdbid");
       return;
     }
-
-    fclose($configf);
 
     echo "Build result accepted. Thanks!";
 }
