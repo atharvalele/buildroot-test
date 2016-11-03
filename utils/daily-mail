@@ -248,7 +248,9 @@ def __main__():
     dry_run = False
     if len(sys.argv) == 2 and sys.argv[1] == "--dry-run":
         dry_run = True
-    smtp = smtplib.SMTP('localhost')
+    smtp = smtplib.SMTP(localconfig.smtphost, localconfig.smtpport)
+    smtp.starttls()
+    smtp.login(localconfig.smtpuser, localconfig.smtppass)
     developers_email(smtp, notifications, yesterday_str, dry_run)
     global_email(smtp, results, results_by_reason, yesterday_str,
                  (success, failures, timeouts, total), dry_run)
