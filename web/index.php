@@ -16,14 +16,15 @@ else
 if ($step > 250)
   $step = 250;
 
-if ($_GET['status'] == 'OK')
-  $filter_status = 0;
-else if ($_GET['status'] == 'NOK')
-  $filter_status = 1;
-else if ($_GET['status'] == 'TIMEOUT')
-  $filter_status = 2;
-else
-  $filter_status = -1;
+$filter_status = -1;
+if (isset ($_GET['status'])) {
+  if ($_GET['status'] == 'OK')
+    $filter_status = 0;
+  else if ($_GET['status'] == 'NOK')
+    $filter_status = 1;
+  else if ($_GET['status'] == 'TIMEOUT')
+    $filter_status = 2;
+}
 
 if (isset($_GET['arch']) && ereg("^[a-z0-9_]*$", $_GET['arch']))
   $filter_arch = $_GET['arch'];
