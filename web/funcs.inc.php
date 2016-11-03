@@ -72,6 +72,8 @@ function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="
     $where_parts[] = " subarch=" . $db->quote_smart($filter_subarch) . " ";
   if (count($where_parts)) {
     $condition = "where " . implode("and", $where_parts);
+  } else {
+    $condition = "";
   }
   $sql = "select * from results $condition order by builddate desc limit $start, $count;";
   $ret = $db->query($sql);
