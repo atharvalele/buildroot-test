@@ -83,7 +83,7 @@ function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="
   return $ret;
 }
 
-function bab_get_path($identifier, $file) {
+function bab_get_path($identifier, $file="") {
   return "results/" . substr($identifier, 0, 3) . "/" . $identifier . "/" . $file;
 }
 
