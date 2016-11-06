@@ -230,36 +230,6 @@ function import_result($buildid, $filename)
 
     $resultdbid = $db->insertid();
 
-    $sql = "insert into results_config (resultid, isset, name, value) values\n";
-
-    foreach ($opts_set as $k => $v) {
-	$sql .= "(" .
-	  $db->quote_smart($resultdbid) . "," .
-	  "1," .
-	  $db->quote_smart($k) . "," .
-	  $db->quote_smart($v) .
-	  "),\n";
-    }
-
-    foreach ($opts_unset as $k) {
-	$sql .= "(" .
-	  $db->quote_smart($resultdbid) . "," .
-	  "0," .
-	  $db->quote_smart($k) . "," .
-	  "''" .
-	  "),\n";
-    }
-
-    $sql[strlen($sql)-2] = ';';
-
-    $ret = $db->query($sql);
-    if ($ret == FALSE) {
-      echo "Couldn't register result config line $line in DB\n";
-      $db->query("delete from results where id=$resultdbid");
-      $db->query("delete from results_config where resultid=$resultdbid");
-      return;
-    }
-
     insert_config($db, $resultdbid, $opts_set);
 
     echo "Build result accepted. Thanks!";
