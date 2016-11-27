@@ -1,7 +1,5 @@
 http://autobuild.buildroot.org/toolchains/configs/armv5-ctng-linux-gnueabi.config,x86,glibc
 http://autobuild.buildroot.org/toolchains/configs/armv7-ctng-linux-gnueabihf.config,x86,glibc
-http://autobuild.buildroot.org/toolchains/configs/bfin-linux-uclibc.config,x86,uclibc
-http://autobuild.buildroot.org/toolchains/configs/bfin-uclinux.config,x86,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-aarch64-glibc.config,x86_64,glibc
 http://autobuild.buildroot.org/toolchains/configs/br-arc-full-internal.config,any,uclibc
 http://autobuild.buildroot.org/toolchains/configs/br-arcle-hs38.config,x86_64,uclibc
