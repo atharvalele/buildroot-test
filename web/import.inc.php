@@ -81,6 +81,15 @@ function insert_config($db, $resultid, $opts_set)
 	insert_symbol_result($db, $resultid, $symbolsid);
 }
 
+function get_duration($buildtimefile)
+{
+	$times = file($buildtimefile);
+
+	$start = explode(":", $times[0])[0];
+	$end   = explode(":", $times[count($times)-1])[0];
+	return $end - $start;
+}
+
 function import_result($buildid, $filename)
 {
     global $maindir;
@@ -168,9 +177,10 @@ function import_result($buildid, $filename)
     $status_stat = stat($thisbuildfinaldir . "status");
     $builddate = strftime("%Y-%m-%d %H:%M:%S", $status_stat['mtime']);
 
-    /* Get submitter and commitid */
+    /* Get submitter, commitid, duration */
     $submitter  = trim(file_get_contents($thisbuildfinaldir . "submitter", "r"));
     $commitid  = trim(file_get_contents($thisbuildfinaldir . "gitid", "r"));
+    $duration = get_duration($thisbuildfinaldir . "build-time.log");
 
     list($opts_set, $opts_unset) = parse_config($thisbuildfinaldir . "config");
 
@@ -208,7 +218,7 @@ function import_result($buildid, $filename)
     $db = new db();
 
     /* Insert into the database */
-    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc, static, subarch) values (" .
+    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc, static, subarch, duration) values (" .
       $db->quote_smart($status) . "," .
       $db->quote_smart($builddate) . "," .
       $db->quote_smart($submitter) . "," .
@@ -218,7 +228,8 @@ function import_result($buildid, $filename)
       $db->quote_smart($reason) . "," .
       $db->quote_smart($found_libc) . "," .
       $db->quote_smart($static) . "," .
-      $db->quote_smart($subarch) .
+      $db->quote_smart($subarch) . "," .
+      $db->quote_smart($duration) .
     ")";
 
     $ret = $db->query($sql);
