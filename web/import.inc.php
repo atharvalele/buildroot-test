@@ -85,8 +85,12 @@ function get_duration($buildtimefile)
 {
 	$times = file($buildtimefile);
 
-	$start = explode(":", $times[0])[0];
-	$end   = explode(":", $times[count($times)-1])[0];
+	$firstline = explode(":", $times[0]);
+	$lastline  = explode(":", $times[count($times)-1]);
+
+	$start = $firstline[0];
+	$end   = $lastline[0];
+
 	return $end - $start;
 }
 
