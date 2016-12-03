@@ -1,6 +1,28 @@
 <?php
 include("funcs.inc.php");
 
+function format_duration($seconds_count)
+{
+        $delimiter  = ':';
+        $seconds = $seconds_count % 60;
+        $minutes = floor($seconds_count/60) % 60;
+        $hours   = floor($seconds_count/3600);
+
+        $seconds = str_pad($seconds, 2, "0", STR_PAD_LEFT);
+        $minutes = str_pad($minutes, 2, "0", STR_PAD_LEFT).$delimiter;
+
+        if($hours > 0)
+        {
+		$hours = str_pad($hours, 2, "0", STR_PAD_LEFT).$delimiter;
+        }
+        else
+        {
+		$hours = '';
+        }
+
+        return "$hours$minutes$seconds";
+}
+
 /* When no start is given, or start is a crazy value (not an integer),
    just default to start=0 */
 if (! isset($_GET['start']) || ! ereg("^[0-9]*$", $_GET['start']))
@@ -61,7 +83,7 @@ bab_header("Buildroot tests");
 echo "<table>\n";
 
 echo "<tr class=\"header\">";
-echo "<td>Date</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch/Subarch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
+echo "<td>Date</td><td>Duration</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch/Subarch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
 echo "</tr>";
 
 $results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc, $filter_static, $filter_subarch);
@@ -79,6 +101,11 @@ while ($current = mysql_fetch_object($results)) {
     echo "<tr class=\"timeout\">\n";
 
   echo "<td>" . $current->builddate . "</td>";
+
+  if ($current->duration)
+	  echo "<td>" . format_duration($current->duration) . "</td>";
+  else
+	  echo "<td>N/A</td>";
 
   if ($current->status == 0)
     echo "<td><a href=\"?status=OK\">OK</a></td>";
