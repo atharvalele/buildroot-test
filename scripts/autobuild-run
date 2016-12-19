@@ -403,10 +403,6 @@ def fixup_config(**kwargs):
     if "BR2_PACKAGE_LTP_TESTSUITE=y\n" in configlines and \
        "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
         configlines.remove("BR2_PACKAGE_LTP_TESTSUITE=y\n")
-    # Make sure xfsprogs is not enabled when we have an uClibc toolchain
-    if "BR2_PACKAGE_XFSPROGS=y\n" in configlines and \
-       "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
-        configlines.remove("BR2_PACKAGE_XFSPROGS=y\n")
     # Make sure mrouted is not enabled when we have an uClibc toolchain
     if "BR2_PACKAGE_MROUTED=y\n" in configlines and \
        "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
