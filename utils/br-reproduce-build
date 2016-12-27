@@ -78,4 +78,5 @@ fi
 
 mkdir ../output
 cp "${BUILD_DIR}/config" ../output/.config
+make olddefconfig O=../output/
 make 2>&1 O=../output | tee logfile
