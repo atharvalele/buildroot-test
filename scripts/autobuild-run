@@ -528,7 +528,11 @@ def gen_config(**kwargs):
     log_write(log, "INFO: generate the configuration")
 
     # Select a random toolchain configuration
-    configs = get_toolchain_configs(**kwargs)
+    try:
+        configs = get_toolchain_configs(**kwargs)
+    except:
+        return -1
+
     i = randint(0, len(configs) - 1)
     config = configs[i]
 
