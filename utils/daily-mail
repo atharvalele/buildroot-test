@@ -58,6 +58,14 @@ def get_mklist(basepath):
 
 mklist = get_mklist(localconfig.brbase)
 
+def get_notification_for_dev(notifications, dev):
+    if dev in notifications:
+        return notifications[dev]
+    else:
+        n = Notification()
+        notifications[dev] = n
+        return n
+
 # Add to the notifications{} dict notifications that are related to
 # architecture "maintainers".
 def add_arch_notification(notifications, build_result):
@@ -65,11 +73,7 @@ def add_arch_notification(notifications, build_result):
     for dev in developers:
         if arch not in dev.architectures:
             continue
-        if dev in notifications:
-            n = notifications[dev]
-        else:
-            n = Notification()
-            notifications[dev] = n
+        n = get_notification_for_dev(notifications, dev)
         n.arch_notifications.append(build_result)
 
 # Given a failure reason as provided by the autobuilders, tries to
@@ -92,23 +96,34 @@ def find_package(reason):
             return reason
     return None
 
+ORPHAN_DEVELOPER = "Arnout Vandecappelle <arnout@mind.be>"
+
+def get_orphan_developer():
+    for dev in developers:
+        if dev.name == ORPHAN_DEVELOPER:
+            return dev
+    return None
+
 # Add to the notifications{} dict notifications that are related to
 # package "maintainers".
 def add_package_notification(notifications, build_result):
     pkg = find_package(build_result['reason'])
     if not pkg:
         return
+    orphan = True
     for dev in developers:
         if pkg not in dev.packages:
             continue
-        if dev in notifications:
-            n = notifications[dev]
-        else:
-            n = Notification()
-            notifications[dev] = n
+        orphan = False
+        n = get_notification_for_dev(notifications, dev)
         n.package_notifications.append(build_result)
+    if orphan:
+        dev = get_orphan_developer()
+        n = get_notification_for_dev(notifications, dev)
+        n.package_notifications.append(build_result)
+    build_result['orphan'] = orphan
 
-def show_results(results, show_status):
+def show_results(results, show_status, show_orphan=False):
     contents = ""
     for r in results:
         arch = r['arch']
@@ -120,11 +135,19 @@ def show_results(results, show_status):
             status_str = "NOK"
         elif status == 2:
             status_str = "TIM"
+        if r['orphan']:
+            orphan_str = "ORPH"
+        else:
+            orphan_str = ""
         url = http_baseurl + "/results/" + r['identifier']
         if show_status:
-            contents += "%12s | %30s | %3s | %40s\n" % (arch, reason, status_str, url)
+            contents += "%12s | %30s | %3s | %40s" % (arch, reason, status_str, url)
         else:
-            contents += "%12s | %30s | %40s\n" % (arch, reason, url)
+            contents += "%12s | %30s | %40s" % (arch, reason, url)
+        if show_orphan:
+            contents += " | %4s\n" % (orphan_str)
+        else:
+            contents += "\n"
     return contents
 
 # Send the e-mails to the individual developers
@@ -136,13 +159,14 @@ def developers_email(smtp, notifications, datestr, dry_run):
         contents = "Hello,\n\n"
         contents += textwrap.fill("This is the list of Buildroot build failures that occured on %s, and for which you are a registered architecture developer or package developer. Please help us improving the quality of Buildroot by investigating those build failures and sending patches to fix them. Thanks!" % datestr)
         contents += "\n\n"
+        show_orphan = k.name == ORPHAN_DEVELOPER
         if len(v.arch_notifications) != 0:
             contents += "Build failures related to your architectures:\n\n"
-            contents += show_results(v.arch_notifications, show_status=False)
+            contents += show_results(v.arch_notifications, show_status=False, show_orphan=False)
             contents += "\n\n"
         if len(v.package_notifications) != 0:
             contents += "Build failures related to your packages:\n\n"
-            contents += show_results(v.package_notifications, show_status=False)
+            contents += show_results(v.package_notifications, show_status=False, show_orphan=show_orphan)
         contents += "\n"
         contents += "-- \n"
         contents += http_baseurl
@@ -186,7 +210,7 @@ def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
     contents += "\n\n"
     contents += "Detail of failures\n"
     contents += "===================\n\n"
-    contents += show_results(results, show_status=True)
+    contents += show_results(results, show_status=True, show_orphan=True)
     contents += "\n"
     contents += "-- \n"
     contents += http_baseurl
