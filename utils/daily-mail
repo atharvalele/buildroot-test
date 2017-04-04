@@ -135,7 +135,7 @@ def show_results(results, show_status, show_orphan=False):
             status_str = "NOK"
         elif status == 2:
             status_str = "TIM"
-        if r['orphan']:
+        if show_orphan and r['orphan']:
             orphan_str = "ORPH"
         else:
             orphan_str = ""
