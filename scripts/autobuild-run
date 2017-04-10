@@ -554,7 +554,7 @@ def gen_config(**kwargs):
         configlines.append("BR2_INIT_SYSTEMD=y\n")
     elif randint(0, 20) == 0:
         configlines.append("BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_EUDEV=y\n")
-    if config["libc"] != "glibc" and randint(0, 20) == 0:
+    if randint(0, 20) == 0:
         configlines.append("BR2_STATIC_LIBS=y\n")
 
     # Write out the configuration file
