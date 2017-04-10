@@ -101,6 +101,7 @@ Options:
                                  Defaults to %(--pid-file)s.
   -c, --config CONFIG            path to configuration file
                                  Not set by default.
+  -d, --debug                    Send log output to stdout instead of log file
   --toolchains-url URL           URL of toolchain configuration file
 
 Format of the configuration file:
@@ -800,7 +801,10 @@ def run_instance(**kwargs):
     if not os.path.exists(idir):
         os.mkdir(idir)
 
-    kwargs['log'] = open(os.path.join(idir, "instance.log"), "a+")
+    if kwargs['debug']:
+        kwargs['log'] = sys.stdout
+    else:
+        kwargs['log'] = open(os.path.join(idir, "instance.log"), "a+")
     log_write(kwargs['log'], "INFO: instance started")
 
     while True:
@@ -926,7 +930,8 @@ def main():
                 nice = (args['--nice'] or 0),
                 toolchains_url = args['--toolchains-url'],
                 upload = upload,
-                buildpid = buildpid
+                buildpid = buildpid,
+                debug = args['--debug']
             ))
         p.start()
         processes.append(p)
