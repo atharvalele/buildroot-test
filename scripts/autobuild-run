@@ -366,6 +366,11 @@ def is_toolchain_usable(**kwargs):
     with open(os.path.join(outputdir, ".config")) as configf:
         configlines = configf.readlines()
 
+    # Check that the toolchain configuration is still present
+    for toolchainline in kwargs['config']:
+        if toolchainline not in configlines:
+            return False
+
     # The latest Linaro toolchains on x86-64 hosts requires glibc
     # 2.14+ on the host.
     if platform.machine() == 'x86_64':
@@ -564,7 +569,7 @@ def gen_config(**kwargs):
         log_write(log, "ERROR: cannot oldconfig")
         return -1
 
-    if not is_toolchain_usable(**kwargs):
+    if not is_toolchain_usable(config=config["contents"], **kwargs):
         return -1
 
     # Now, generate the random selection of packages, and fixup
