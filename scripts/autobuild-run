@@ -86,7 +86,7 @@ Options:
   -s, --submitter SUBMITTER      name/machine of submitter
                                  Defaults to %(--submitter)s.
   --http-url URL                 URL of resource to submit your results.
-                                 Defaults to $(--http-url)s.
+                                 Defaults to %(--http-url)s.
   --http-login LOGIN             username to send results with
                                  Not set by default.
   --http-password PASSWORD       password to send results with (for security
