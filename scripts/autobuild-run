@@ -252,11 +252,8 @@ class SystemInfo:
 def get_toolchain_configs(**kwargs):
     """Fetch and return the possible toolchain configurations
 
-    This function returns an array of dictionaries, with for each toolchain:
-        - url: the URL of the toolchain defconfig
-        - libc: the C library used by the toolchain
-        - hostarch: the host architecture for which the toolchain is built
-        - contents: an array of lines of the defconfig
+    This function returns an array of toolchain configurations. Each
+    toolchain configuration is itself an array of lines of the defconfig.
     """
     toolchains_url = kwargs['toolchains_url']
 
@@ -271,31 +268,30 @@ def get_toolchain_configs(**kwargs):
 
     for row in csv.reader(l):
         config = {}
-        config["url"] = row[0]
-        config["hostarch"] = row[1]
+        url = row[0]
+        config_hostarch = row[1]
         keep = False
 
         # Keep all toolchain configs that work regardless of the host
         # architecture
-        if config['hostarch'] == "any":
+        if config_hostarch == "any":
             keep = True
 
         # Keep all toolchain configs that can work on the current host
         # architecture
-        if hostarch == config["hostarch"]:
+        if hostarch == config_hostarch:
             keep = True
 
         # Assume that x86 32 bits toolchains work on x86_64 build
         # machines
-        if hostarch == 'x86_64' and config["hostarch"] == "x86":
+        if hostarch == 'x86_64' and config_hostarch == "x86":
             keep = True
 
         if not keep:
             continue
 
-        config["libc"] = row[2]
-        with urlopen_closing(config["url"]) as r:
-            config["contents"] = decode_byte_list(r.readlines())
+        with urlopen_closing(url) as r:
+            config = decode_byte_list(r.readlines())
         configs.append(config)
     return configs
 
@@ -542,7 +538,7 @@ def gen_config(**kwargs):
     i = randint(0, len(configs) - 1)
     config = configs[i]
 
-    configlines = config["contents"]
+    configlines = config
 
     # Amend the configuration with a few things.
     configlines.append("BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y\n")
@@ -569,7 +565,7 @@ def gen_config(**kwargs):
         log_write(log, "ERROR: cannot oldconfig")
         return -1
 
-    if not is_toolchain_usable(config=config["contents"], **kwargs):
+    if not is_toolchain_usable(config=config, **kwargs):
         return -1
 
     # Now, generate the random selection of packages, and fixup
