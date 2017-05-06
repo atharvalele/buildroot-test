@@ -397,15 +397,6 @@ def fixup_config(**kwargs):
     with open(os.path.join(outputdir, ".config")) as configf:
         configlines = configf.readlines()
 
-    # Make sure Qt license is approved
-    if "BR2_PACKAGE_QT=y\n" in configlines:
-        if "# BR2_PACKAGE_QT_LICENSE_APPROVED is not set\n" in configlines:
-            configlines.remove("# BR2_PACKAGE_QT_LICENSE_APPROVED is not set\n")
-            configlines.append("BR2_PACKAGE_QT_LICENSE_APPROVED=y\n")
-    if "BR2_PACKAGE_QT5BASE=y\n" in configlines:
-        if "# BR2_PACKAGE_QT5BASE_LICENSE_APPROVED is not set\n" in configlines:
-            configlines.remove("# BR2_PACKAGE_QT5BASE_LICENSE_APPROVED is not set\n")
-            configlines.append("BR2_PACKAGE_QT5BASE_LICENSE_APPROVED=y\n")
     # Make sure LTP is not enabled when we have an uClibc toolchain
     if "BR2_PACKAGE_LTP_TESTSUITE=y\n" in configlines and \
        "BR2_TOOLCHAIN_USES_UCLIBC=y\n" in configlines:
