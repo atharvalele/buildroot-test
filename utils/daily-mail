@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 from datetime import date, timedelta
 import localconfig
 
-sys.path.append(os.path.join(localconfig.brbase, "support", "scripts"))
+sys.path.append(os.path.join(localconfig.brbase, "utils"))
 import getdeveloperlib
 
 baseurl = "autobuild.buildroot.net"
