@@ -131,7 +131,6 @@ function import_result($buildid, $filename)
 	! file_exists($thisbuildtmpdir . "gitid")  ||
 	! file_exists($thisbuildtmpdir . "build-end.log") ||
 	! file_exists($thisbuildtmpdir . "config") ||
-	! file_exists($thisbuildtmpdir . "build-time.log") ||
 	! file_exists($thisbuildtmpdir . "submitter")) {
       system("rm -rf " . $thisbuildtmpdir);
       echo "Invalid contents of the build report file\n";
@@ -185,7 +184,11 @@ function import_result($buildid, $filename)
     /* Get submitter, commitid, duration */
     $submitter  = trim(file_get_contents($thisbuildfinaldir . "submitter", "r"));
     $commitid  = trim(file_get_contents($thisbuildfinaldir . "gitid", "r"));
-    $duration = get_duration($thisbuildfinaldir . "build-time.log");
+    if (file_exists($thisbuildfinaldir . "build-time.log")) {
+        $duration = get_duration($thisbuildfinaldir . "build-time.log");
+    } else {
+        $duration = 0;
+    }
 
     list($opts_set, $opts_unset) = parse_config($thisbuildfinaldir . "config");
 
