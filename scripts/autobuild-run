@@ -680,6 +680,23 @@ def send_results(result, **kwargs):
                      os.path.join(resultdir, "gitid")],
                     shell=True, cwd=srcdir)
 
+    # Return True if the result should be rejected, False otherwise
+    def reject_results():
+        lastlines = decode_bytes(subprocess.Popen(
+            ["tail", "-n", "3", os.path.join(outputdir, "logfile")],
+            stdout=subprocess.PIPE).communicate()[0]).splitlines()
+
+	# Reject results where qemu-user refused to build
+	regexp = re.compile(r'^package/qemu/qemu.mk:.*Refusing to build qemu-user')
+	for line in lastlines:
+	    if regexp.match(line):
+		return True
+
+	return False
+
+    if reject_results():
+        return
+
     def get_failure_reason():
         # Output is a tuple (package, version), or None.
         lastlines = decode_bytes(subprocess.Popen(
