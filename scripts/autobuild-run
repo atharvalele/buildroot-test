@@ -68,6 +68,7 @@ defaults = {
     '--pid-file': '/tmp/buildroot-autobuild.pid',
     '--http-url': 'http://autobuild.buildroot.org/submit/',
     '--toolchains-url': 'http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv',
+    '--repo': 'https://github.com/buildroot/buildroot.git',
 }
 
 doc = """autobuild-run - run Buildroot autobuilder
@@ -103,6 +104,8 @@ Options:
                                  Not set by default.
   -d, --debug                    Send log output to stdout instead of log file
   --toolchains-url URL           URL of toolchain configuration file
+  -r, --repo URL                 URL of Buildroot repository to clone
+                                 Defaults to %(--repo)s
 
 Format of the configuration file:
 
@@ -329,7 +332,7 @@ def prepare_build(**kwargs):
     # didn't exist already.
     srcdir = os.path.join(idir, "buildroot")
     if not os.path.exists(srcdir):
-        ret = subprocess.call(["git", "clone", "https://github.com/buildroot/buildroot.git", srcdir],
+        ret = subprocess.call(["git", "clone", kwargs['repo'], srcdir],
                               stdout=log, stderr=log)
         if ret != 0:
             log_write(log, "ERROR: could not clone Buildroot sources")
@@ -337,9 +340,14 @@ def prepare_build(**kwargs):
 
     # Update the Buildroot sources.
     abssrcdir = os.path.abspath(srcdir)
-    ret = subprocess.call(["git", "pull"], cwd=abssrcdir, stdout=log, stderr=log)
+    ret = subprocess.call(["git", "fetch", kwargs['repo']], cwd=abssrcdir, stdout=log, stderr=log)
     if ret != 0:
-        log_write(log, "ERROR: could not pull Buildroot sources")
+        log_write(log, "ERROR: could not fetch Buildroot sources")
+        return -1
+
+    ret = subprocess.call(["git", "checkout", "--detach", "FETCH_HEAD"], cwd=abssrcdir, stdout=log, stderr=log)
+    if ret != 0:
+        log_write(log, "ERROR: could not check out Buildroot sources")
         return -1
 
     # Create an empty output directory. We remove it first, in case a previous build was aborted.
@@ -948,6 +956,7 @@ def main():
                 make_opts = (args['--make-opts'] or ''),
                 nice = (args['--nice'] or 0),
                 toolchains_url = args['--toolchains-url'],
+                repo = args['--repo'],
                 upload = upload,
                 buildpid = buildpid,
                 debug = args['--debug']
