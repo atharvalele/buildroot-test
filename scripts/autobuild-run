@@ -315,10 +315,16 @@ def gen_config(**kwargs):
     log = kwargs['log']
     srcdir = os.path.join(idir, "buildroot")
 
+    log_write(log, "INFO: generate the configuration")
+
+    if kwargs['debug']:
+        devnull = log
+    else:
+        devnull = open(os.devnull, "w")
     ret = subprocess.call([os.path.join(srcdir, "utils/genrandconfig"),
                            "-i", str(kwargs['instance']),
                            "--toolchains-url", kwargs['toolchains_url']],
-                          stdout=log, stderr=log)
+                          stdout=devnull, stderr=log)
     return ret
 
 def do_build(**kwargs):
@@ -554,6 +560,7 @@ def run_instance(**kwargs):
 
         ret = gen_config(**kwargs)
         if ret != 0:
+            log_write(kwargs['log'], "WARN: failed to generate configuration")
             continue
 
         ret = do_build(**kwargs)
