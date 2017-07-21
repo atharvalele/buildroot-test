@@ -313,6 +313,7 @@ def gen_config(**kwargs):
     """Generate a new random configuration."""
     idir = "instance-%d" % kwargs['instance']
     log = kwargs['log']
+    outputdir = os.path.abspath(os.path.join(idir, "output"))
     srcdir = os.path.join(idir, "buildroot")
 
     log_write(log, "INFO: generate the configuration")
@@ -322,7 +323,7 @@ def gen_config(**kwargs):
     else:
         devnull = open(os.devnull, "w")
     ret = subprocess.call([os.path.join(srcdir, "utils/genrandconfig"),
-                           "-i", str(kwargs['instance']),
+                           "-o", outputdir, "-b", srcdir,
                            "--toolchains-url", kwargs['toolchains_url']],
                           stdout=devnull, stderr=log)
     return ret
