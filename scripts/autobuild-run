@@ -67,7 +67,7 @@ defaults = {
     '--nice': 0,
     '--pid-file': '/tmp/buildroot-autobuild.pid',
     '--http-url': 'http://autobuild.buildroot.org/submit/',
-    '--toolchains-url': 'http://autobuild.buildroot.org/toolchains/configs/toolchain-configs.csv',
+    '--toolchains-csv': 'support/config-fragments/autobuild/toolchain-configs.csv',
     '--repo': 'https://github.com/buildroot/buildroot.git',
 }
 
@@ -103,7 +103,7 @@ Options:
   -c, --config CONFIG            path to configuration file
                                  Not set by default.
   -d, --debug                    Send log output to stdout instead of log file
-  --toolchains-url URL           URL of toolchain configuration file
+  --toolchains-csv CSVFILE       Toolchain configuration file
   -r, --repo URL                 URL of Buildroot repository to clone
                                  Defaults to %(--repo)s
 
@@ -322,10 +322,17 @@ def gen_config(**kwargs):
         devnull = log
     else:
         devnull = open(os.devnull, "w")
-    ret = subprocess.call([os.path.join(srcdir, "utils/genrandconfig"),
-                           "-o", outputdir, "-b", srcdir,
-                           "--toolchains-url", kwargs['toolchains_url']],
-                          stdout=devnull, stderr=log)
+
+    args = [os.path.join(srcdir, "utils/genrandconfig"),
+            "-o", outputdir, "-b", srcdir]
+
+    toolchains_csv = kwargs['toolchains_csv']
+    if toolchains_csv:
+        if not os.path.isabs(toolchains_csv):
+            toolchains_csv = os.path.join(srcdir, toolchains_csv)
+        args.extend(["--toolchains-csv", toolchains_csv])
+
+    ret = subprocess.call(args, stdout=devnull, stderr=log)
     return ret
 
 def do_build(**kwargs):
@@ -674,7 +681,7 @@ def main():
                 submitter = args['--submitter'],
                 make_opts = (args['--make-opts'] or ''),
                 nice = (args['--nice'] or 0),
-                toolchains_url = args['--toolchains-url'],
+                toolchains_csv = args['--toolchains-csv'],
                 repo = args['--repo'],
                 upload = upload,
                 buildpid = buildpid,
