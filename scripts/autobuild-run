@@ -409,7 +409,7 @@ def send_results(result, **kwargs):
         shutil.copyfile(os.path.join(outputdir, "legal-info", "manifest.csv"),
                         os.path.join(resultdir, "licenses-manifest.csv"))
 
-    subprocess.call(["git log master -n 1 --pretty=format:%%H > %s" % \
+    subprocess.call(["git log -n 1 --pretty=format:%%H > %s" % \
                      os.path.join(resultdir, "gitid")],
                     shell=True, cwd=srcdir)
 
