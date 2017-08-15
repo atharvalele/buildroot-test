@@ -144,6 +144,13 @@ function import_result($buildid, $filename)
       return;
     }
 
+    system("grep -q 'Refusing to build qemu-user' " . $thisbuildtmpdir . "build-end.log",
+	   $retval);
+    if ($retval == 0) {
+      echo "Reject build result, qemu-user issue\n";
+      return;
+    }
+
     /* Remove the build.log.bz2 file if it's in there */
     system("rm -f " . $thisbuildtmpdir . "build.log.bz2", $retval);
 
