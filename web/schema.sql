@@ -7,14 +7,23 @@ CREATE TABLE `results` (
   `identifier` char(40) NOT NULL DEFAULT '',
   `arch` varchar(64) NOT NULL DEFAULT '',
   `reason` varchar(255) NOT NULL DEFAULT '',
+  `libc` varchar(32) NOT NULL DEFAULT '',
+  `static` tinyint(1) NOT NULL default '0',
+  `subarch` varchar(64) NOT NULL DEFAULT '',
+  `duration` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CREATE TABLE `results_config` (
-       `id`         int(11) NOT NULL auto_increment,
-       `resultid`   int(11) default NULL,
-       `isset`	    tinyint(1) NOT NULL default '0',
-       `name`       varchar(255) NOT NULL default '',
-       `value`	    varchar(255) NOT NULL default '',
-       PRIMARY KEY (`id`)
+CREATE TABLE `config_symbol` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL DEFAULT '',
+  `value` varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `symbol_per_result` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `result_id` int(11) NOT NULL DEFAULT '0',
+  `symbol_id` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
