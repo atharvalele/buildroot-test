@@ -188,6 +188,14 @@ function import_result($buildid, $filename)
     $status_stat = stat($thisbuildfinaldir . "status");
     $builddate = strftime("%Y-%m-%d %H:%M:%S", $status_stat['mtime']);
 
+    /* Get the branch */
+    $branch_file = $thisbuildfinaldir . "branch";
+    if (file_exists($branch_file)) {
+       $branch = file_get_contents($branch_file);
+    } else {
+       $branch = "master";
+    }
+
     /* Get submitter, commitid, duration */
     $submitter  = trim(file_get_contents($thisbuildfinaldir . "submitter", "r"));
     $commitid  = trim(file_get_contents($thisbuildfinaldir . "gitid", "r"));
@@ -233,7 +241,7 @@ function import_result($buildid, $filename)
     $db = new db();
 
     /* Insert into the database */
-    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc, static, subarch, duration) values (" .
+    $sql = "insert into results (status, builddate, submitter, commitid, identifier, arch, reason, libc, static, subarch, duration, branch) values (" .
       $db->quote_smart($status) . "," .
       $db->quote_smart($builddate) . "," .
       $db->quote_smart($submitter) . "," .
@@ -244,7 +252,8 @@ function import_result($buildid, $filename)
       $db->quote_smart($found_libc) . "," .
       $db->quote_smart($static) . "," .
       $db->quote_smart($subarch) . "," .
-      $db->quote_smart($duration) .
+      $db->quote_smart($duration) . "," .
+      $db->quote_smart($branch) .
     ")";
 
     $ret = $db->query($sql);
