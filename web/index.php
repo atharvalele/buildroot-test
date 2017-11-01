@@ -53,6 +53,11 @@ if (isset($_GET['arch']) && ereg("^[a-z0-9_]*$", $_GET['arch']))
 else
   $filter_arch = "";
 
+if (isset($_GET['branch']) && ereg("^[a-z0-9_\.]*$", $_GET['branch']))
+  $filter_branch = $_GET['branch'];
+else
+  $filter_branch = "";
+
 if (isset($_GET['reason']) && ereg("^[A-Za-z0-9_\+\.\-]*$", $_GET['reason']))
   $filter_reason = $_GET['reason'];
 else
@@ -86,7 +91,7 @@ echo "<tr class=\"header\">";
 echo "<td>Date</td><td>Duration</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch/Subarch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
 echo "</tr>";
 
-$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc, $filter_static, $filter_subarch);
+$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc, $filter_static, $filter_subarch, $filter_branch);
 
 while ($current = mysql_fetch_object($results)) {
 
@@ -114,7 +119,7 @@ while ($current = mysql_fetch_object($results)) {
   else if ($current->status == 2)
     echo "<td><a href=\"?status=TIMEOUT\">TIMEOUT</a></td>";
 
-  echo "<td><a href=\"http://git.buildroot.net/buildroot/commit/?id=" . $current->commitid . "\">" . substr($current->commitid, 0, 8) . "</a></td>";
+  echo "<td style=\"font-size: 80%\"><a href=\"?branch=" . urlencode($current->branch) . "\">" . $current->branch . "</a><br/><a href=\"http://git.buildroot.net/buildroot/commit/?id=" . $current->commitid . "\">" . substr($current->commitid, 0, 8) . "</a></td>";
   echo "<td><a href=\"?submitter=" . urlencode($current->submitter) . "\">" . $submitter . "</a></td>";
   echo "<td><a href=\"?arch=" . $current->arch . "\">" . $current->arch . "</a>";
   if ($current->subarch != "")
