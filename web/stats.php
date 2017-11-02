@@ -27,7 +27,7 @@ $successtotal = 0;
 $failuretotal = 0;
 $timeouttotal = 0;
 $total        = 0;
-while ($current = mysql_fetch_object($ret)) {
+while ($current = mysqli_fetch_object($ret)) {
   $successtotal += $current->success;
   $failuretotal += $current->failures;
   $timeouttotal += $current->timeouts;
@@ -71,7 +71,7 @@ if ($ret == FALSE) {
   exit;
 }
 
-$result = mysql_fetch_object($ret);
+$result = mysqli_fetch_object($ret);
 
 $successrate = sprintf("%2.2f", $result->success / $result->total * 100);
 $failurerate = sprintf("%2.2f", $result->failures / $result->total * 100);

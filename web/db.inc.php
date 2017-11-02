@@ -10,26 +10,22 @@ class db
     global $db_pass;
     global $db_name;
 
-    if(mysql_connect($db_host,$db_user,$db_pass)==FALSE)
+    $this->conn = mysqli_connect($db_host,$db_user,$db_pass,$db_name);
+    if (!$this->conn)
       {
 	echo "Issue connecting to DB on host $db_host.\n";
 	return 0;
       }
 
-    if(mysql_select_db($db_name) == FALSE)
-      {
-	echo "Issue connecting to DB $db_name on host $db_host.\n";
-	return 0;
-      }
-
-    mysql_query("set names 'utf8'");
+    $this->conn->query("set names 'utf8'");
   }
 
   function query ($query)
   {
-    if( ($result = mysql_query($query)) == FALSE)
+    $result = $this->conn->query($query);
+    if (!$result)
       {
-	echo "Syntax problem in '$query' : " . mysql_error() . "\n";
+	echo "Syntax problem in '$query'\n";
 	return 0;
       }
 
@@ -38,7 +34,7 @@ class db
 
   function insertid ()
   {
-    return mysql_insert_id ();
+    return $this->conn->insert_id;
   }
 
   /**
@@ -54,7 +50,7 @@ class db
       $value = stripslashes($value);
 
     if (!is_numeric($value))
-      $value = "'" . mysql_real_escape_string($value) . "'";
+      $value = "'" . $this->conn->real_escape_string($value) . "'";
 
     return $value;
   }

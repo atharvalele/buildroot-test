@@ -53,7 +53,7 @@ function get_all_symbols_id($db, $opts)
 	$result = $db->query($sql);
 
 	$symbolids = array();
-	while($row = mysql_fetch_array($result)) {
+	while($row = mysqli_fetch_array($result)) {
 		array_push($symbolids, $row["id"]);
 	}
 

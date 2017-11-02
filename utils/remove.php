@@ -1,4 +1,4 @@
-#!/usr/bin/env php5
+#!/usr/bin/env php
 <?php
 /*
  * Remove one build failure from the database
@@ -23,12 +23,12 @@ if ($ret == FALSE) {
   echo "FAILED\n";
   exit(1);
 }
-if (mysql_num_rows($ret) != 1) {
+if (mysqli_num_rows($ret) != 1) {
   echo "NOT FOUND\n";
   exit(1);
 }
 
-$c = mysql_fetch_object($ret);
+$c = mysqli_fetch_object($ret);
 $id = $c->id;
 
 echo " $id\n";
@@ -42,7 +42,7 @@ if (!is_writable($path)) {
 
 echo "Removing from results_config...";
 
-$sql = "delete from results_config where resultid=" . $id;
+$sql = "delete from symbol_per_result where result_id=" . $id;
 $ret = $db->query($sql);
 if ($ret == FALSE) {
   echo "FAILED\n";

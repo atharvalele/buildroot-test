@@ -24,7 +24,7 @@ $failures_data = array();
 $timeouts_data = array();
 $total_data = array();
 
-while($current = mysql_fetch_object($ret)) {
+while($current = mysqli_fetch_object($ret)) {
   array_push($dates_data, $current->day);
   array_push($success_data, $current->success * 100 / $current->total);
   array_push($failures_data, $current->failures * 100 / $current->total);

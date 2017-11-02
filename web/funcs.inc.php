@@ -43,7 +43,7 @@ function bab_total_results_count()
     return;
   }
 
-  $ret = mysql_fetch_array($ret);
+  $ret = mysqli_fetch_array($ret);
   return $ret[0];
 }
 

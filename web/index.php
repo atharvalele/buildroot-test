@@ -25,12 +25,12 @@ function format_duration($seconds_count)
 
 /* When no start is given, or start is a crazy value (not an integer),
    just default to start=0 */
-if (! isset($_GET['start']) || ! ereg("^[0-9]*$", $_GET['start']))
+if (! isset($_GET['start']) || ! preg_match("/^[0-9]*$/", $_GET['start']))
   $start = 0;
 else
   $start = $_GET['start'];
 
-if (! isset($_GET['step']) || ! ereg("^[0-9]*$", $_GET['step']))
+if (! isset($_GET['step']) || ! preg_match("/^[0-9]*$/", $_GET['step']))
   $step = 50;
 else
   $step = $_GET['step'];
@@ -48,32 +48,32 @@ if (isset ($_GET['status'])) {
     $filter_status = 2;
 }
 
-if (isset($_GET['arch']) && ereg("^[a-z0-9_]*$", $_GET['arch']))
+if (isset($_GET['arch']) && preg_match("/^[a-z0-9_]*$/", $_GET['arch']))
   $filter_arch = $_GET['arch'];
 else
   $filter_arch = "";
 
-if (isset($_GET['branch']) && ereg("^[a-z0-9_\.]*$", $_GET['branch']))
+if (isset($_GET['branch']) && preg_match("/^[a-z0-9_\.]*$/", $_GET['branch']))
   $filter_branch = $_GET['branch'];
 else
   $filter_branch = "";
 
-if (isset($_GET['reason']) && ereg("^[A-Za-z0-9_\+\.\-]*$", $_GET['reason']))
+if (isset($_GET['reason']) && preg_match("/^[A-Za-z0-9_\+\.\-]*$/", $_GET['reason']))
   $filter_reason = $_GET['reason'];
 else
   $filter_reason = "";
 
-if (isset($_GET['libc']) && ereg("^[a-z]*$", $_GET['libc']))
+if (isset($_GET['libc']) && preg_match("/^[a-z]*$/", $_GET['libc']))
   $filter_libc = $_GET['libc'];
 else
   $filter_libc = "";
 
-if (isset($_GET['static']) && ereg("^[0-1]$", $_GET['static']))
+if (isset($_GET['static']) && preg_match("/^[0-1]$/", $_GET['static']))
   $filter_static = $_GET['static'];
 else
   $filter_static = "";
 
-if (isset($_GET['subarch']) && ereg("^[A-Za-z0-9_\+\.\-]*$", $_GET['subarch']))
+if (isset($_GET['subarch']) && preg_match("/^[A-Za-z0-9_\+\.\-]*$/", $_GET['subarch']))
   $filter_subarch = $_GET['subarch'];
 else
   $filter_subarch = "";
@@ -93,7 +93,7 @@ echo "</tr>";
 
 $results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc, $filter_static, $filter_subarch, $filter_branch);
 
-while ($current = mysql_fetch_object($results)) {
+while ($current = mysqli_fetch_object($results)) {
 
   /* Beautify a bit the name of the host that has been used for the build */
   $submitter = preg_replace("/(\w+) (\([^)]*\))/", "$1<br/><span style=\"font-size: 80%;\"><i>$2</i></font>", $current->submitter);
