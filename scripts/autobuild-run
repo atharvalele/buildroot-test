@@ -181,6 +181,23 @@ def check_version():
         print("ERROR: script version too old, please upgrade.")
         sys.exit(1)
 
+def get_branch():
+    """Returns the branch that should be built. It fetches a CSV file from
+    autobuild.buildroot.org that provides the list of branches to test
+    (first field) and their weight (second field). We build a list of
+    branches, where the branch name is repeated N times, with N being
+    the weight of the branch. We then pick a random branch in this
+    list. This way, branches with a higher weight are more likely to
+    be selected.
+    """
+    with urlopen_closing('http://autobuild.buildroot.org/branches') as r:
+        csv_branches = r.readlines()
+    branches = []
+    for branch in csv.reader(csv_branches):
+        branches += [branch[0]] * int(branch[1])
+
+    return branches[randint(0, len(branches) - 1)]
+
 class SystemInfo:
     DEFAULT_NEEDED_PROGS = ["make", "git", "gcc", "timeout"]
     DEFAULT_OPTIONAL_PROGS = ["bzr", "java", "javac", "jar"]
@@ -207,6 +224,7 @@ class SystemInfo:
         return None
 
     def has(self, prog):
+
         """Checks whether a program is available.
         Lazily evaluates missing entries.
 
@@ -278,6 +296,9 @@ def prepare_build(**kwargs):
         log_write(log, "INFO: removing %s from downloads" % f)
         os.remove(os.path.join(dldir, f))
 
+    branch = get_branch()
+    log_write(log, "INFO: testing branch '%s'" % branch)
+
     # Clone Buildroot. This only happens if the source directory
     # didn't exist already.
     srcdir = os.path.join(idir, "buildroot")
@@ -295,7 +316,7 @@ def prepare_build(**kwargs):
         log_write(log, "ERROR: could not fetch Buildroot sources")
         return -1
 
-    ret = subprocess.call(["git", "checkout", "--detach", "FETCH_HEAD"], cwd=abssrcdir, stdout=log, stderr=log)
+    ret = subprocess.call(["git", "checkout", "--detach", "origin/%s" % branch], cwd=abssrcdir, stdout=log, stderr=log)
     if ret != 0:
         log_write(log, "ERROR: could not check out Buildroot sources")
         return -1
@@ -306,6 +327,8 @@ def prepare_build(**kwargs):
         # shutil.rmtree doesn't remove write-protected files
         subprocess.call(["rm", "-rf", outputdir])
     os.mkdir(outputdir)
+    with open(os.path.join(outputdir, "branch"), "w") as branchf:
+        branchf.write(branch)
 
     return 0
 
@@ -402,6 +425,8 @@ def send_results(result, **kwargs):
                     os.path.join(resultdir, "config"))
     shutil.copyfile(os.path.join(outputdir, "defconfig"),
                     os.path.join(resultdir, "defconfig"))
+    shutil.copyfile(os.path.join(outputdir, "branch"),
+                    os.path.join(resultdir, "branch"))
     if os.path.exists(os.path.join(outputdir, "build", "build-time.log")):
         shutil.copyfile(os.path.join(outputdir, "build", "build-time.log"),
                         os.path.join(resultdir, "build-time.log"))
