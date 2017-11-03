@@ -1,11 +1,11 @@
 <?php
 include("funcs.inc.php");
 
-bab_header("Buildroot tests statistics");
+bab_header("Buildroot <i>master</i> tests statistics");
 
 $db = new db();
 
-$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results group by date(builddate) order by date(builddate) desc limit 30;";
+$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results where branch='master' group by date(builddate) order by date(builddate) desc limit 30;";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
@@ -62,7 +62,7 @@ echo "  <td>$timeoutrate%</td>\n";
 echo "  <td>$total</td>\n";
 echo " </tr>\n";
 
-$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total from results;";
+$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total from results where branch='master';";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {

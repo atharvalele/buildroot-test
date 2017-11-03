@@ -9,7 +9,7 @@ $myData = new pData();
 
 $db = new db();
 
-$sql = "select * from (select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results group by date(builddate) order by date(builddate) desc limit 180) as foo order by day;";
+$sql = "select * from (select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results where branch='master' group by date(builddate) order by date(builddate) desc limit 180) as foo order by day;";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
