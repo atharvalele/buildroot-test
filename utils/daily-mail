@@ -21,7 +21,7 @@ developers = getdeveloperlib.parse_developers(localconfig.brbase)
 # success, failures, timeouts, and total number of builds.
 def get_overall_stats(db, datestr):
     db.query("""select status,count(id) as count from results
-    where date(builddate) = '%s' group by status""" % datestr)
+    where date(builddate) = '%s' and branch = 'master' group by status""" % datestr)
     r = db.use_result()
     result = dict(r.fetch_row(maxrows=0))
     if '0' in result:
@@ -233,13 +233,13 @@ def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
 # Get the list of build failures for the past day
 def get_build_results(db, datestr):
     db.query("""select * from results
-    where date(builddate) = '%s' and status != 0 order by reason""" % datestr)
+    where date(builddate) = '%s' and status != 0 and branch = 'master' order by reason""" % datestr)
     r = db.use_result()
     return r.fetch_row(how=1, maxrows=0)
 
 def get_build_results_grouped_by_reason(db, datestr):
     db.query("""select reason,count(id) as reason_count from results
-    where date(builddate) = '%s' and status != 0
+    where date(builddate) = '%s' and status != 0 and branch = 'master'
     group by reason order by reason_count desc, reason""" % datestr)
     r = db.use_result()
     return r.fetch_row(how=1, maxrows=0)
