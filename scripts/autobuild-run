@@ -311,7 +311,7 @@ def prepare_build(**kwargs):
 
     # Update the Buildroot sources.
     abssrcdir = os.path.abspath(srcdir)
-    ret = subprocess.call(["git", "fetch", kwargs['repo']], cwd=abssrcdir, stdout=log, stderr=log)
+    ret = subprocess.call(["git", "fetch", "origin"], cwd=abssrcdir, stdout=log, stderr=log)
     if ret != 0:
         log_write(log, "ERROR: could not fetch Buildroot sources")
         return -1
