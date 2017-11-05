@@ -1,11 +1,38 @@
 <?php
 include("funcs.inc.php");
 
-bab_header("Buildroot <i>master</i> tests statistics");
+if (isset($_GET['branch']) && preg_match("/^[a-z0-9_\.]*$/", $_GET['branch']))
+  $branch = $_GET['branch'];
+else
+  $branch = "master";
+
+bab_header("Buildroot '$branch' tests statistics");
+
+echo "<h2>Branches: ";
+
+$csv = fopen("branches", "r");
+if ($csv !== FALSE) {
+    $first = true;
+    while (($data = fgetcsv($csv, 128, ",")) !== FALSE) {
+      if (!$first) {
+         echo "&nbsp;|&nbsp;";
+      }
+      if ($data[0] == $branch) {
+         echo "<i><a href=\"?branch=$data[0]\">$data[0]</a></i>";
+      } else {
+         echo "<a href=\"?branch=$data[0]\">$data[0]</a>";
+      }
+      $first = false;
+    }
+} else {
+  echo "master";
+}
+
+echo "</h2>\n";
 
 $db = new db();
 
-$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results where branch='master' group by date(builddate) order by date(builddate) desc limit 30;";
+$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results where branch='$branch' group by date(builddate) order by date(builddate) desc limit 30;";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
@@ -62,7 +89,7 @@ echo "  <td>$timeoutrate%</td>\n";
 echo "  <td>$total</td>\n";
 echo " </tr>\n";
 
-$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total from results where branch='master';";
+$sql = "select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total from results where branch='$branch';";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
@@ -91,7 +118,7 @@ echo " </tr>\n";
 echo "</table>\n";
 echo "<p></p>";
 
-echo "<center><img src=\"graph.php\"/></center>";
+echo "<center><img src=\"graph.php?branch=$branch\"/></center>";
 
 bab_footer();
 ?>

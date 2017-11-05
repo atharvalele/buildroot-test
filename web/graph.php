@@ -3,13 +3,18 @@ include("../externals/pchart/class/pDraw.class.php");
 include("../externals/pchart/class/pImage.class.php");
 include("../externals/pchart/class/pData.class.php");
 
+if (isset($_GET['branch']) && preg_match("/^[a-z0-9_\.]*$/", $_GET['branch']))
+  $branch = $_GET['branch'];
+else
+  $branch = "master";
+
 include("funcs.inc.php");
 
 $myData = new pData();
 
 $db = new db();
 
-$sql = "select * from (select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results where branch='master' group by date(builddate) order by date(builddate) desc limit 180) as foo order by day;";
+$sql = "select * from (select sum(status=0) as success,sum(status=1) as failures,sum(status=2) as timeouts,count(*) as total,date(builddate) as day from results where branch='$branch' group by date(builddate) order by date(builddate) desc limit 180) as foo order by day;";
 
 $ret = $db->query($sql);
 if ($ret == FALSE) {
