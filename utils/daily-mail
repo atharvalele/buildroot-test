@@ -8,6 +8,8 @@ import smtplib
 from email.mime.text import MIMEText
 from datetime import date, timedelta
 import localconfig
+import csv
+from collections import defaultdict
 
 sys.path.append(os.path.join(localconfig.brbase, "utils"))
 import getdeveloperlib
@@ -17,32 +19,45 @@ http_baseurl = "http://" + baseurl
 
 developers = getdeveloperlib.parse_developers(localconfig.brbase)
 
+def get_branches():
+    """Returns the list of branches currently tested by the autobuilders."""
+    branch_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "web", "branches")
+    with open(branch_file) as r:
+        csv_branches = r.readlines()
+    branches = []
+    for branch in csv.reader(csv_branches):
+        branches.append(branch[0])
+    return branches
+
 # Find, for the previous day, the global statistics: number of
 # success, failures, timeouts, and total number of builds.
-def get_overall_stats(db, datestr):
-    db.query("""select status,count(id) as count from results
-    where date(builddate) = '%s' and branch = 'master' group by status""" % datestr)
-    r = db.use_result()
-    result = dict(r.fetch_row(maxrows=0))
-    if '0' in result:
-        success = int(result['0'])
-    else:
-        success = 0
-    if '1' in result:
-        failures = int(result['1'])
-    else:
-        failures = 0
-    if '2' in result:
-        timeouts = int(result['2'])
-    else:
-        timeouts = 0
-    total = success + failures + timeouts
-    return (success, failures, timeouts, total)
+def get_overall_stats(db, datestr, branches):
+    stats = {}
+    for branch in branches:
+        db.query("""select status,count(id) as count from results
+        where date(builddate) = '%s' and branch = '%s' group by status""" % (datestr, branch))
+        r = db.use_result()
+        result = dict(r.fetch_row(maxrows=0))
+        if '0' in result:
+            success = int(result['0'])
+        else:
+            success = 0
+        if '1' in result:
+            failures = int(result['1'])
+        else:
+            failures = 0
+        if '2' in result:
+            timeouts = int(result['2'])
+        else:
+            timeouts = 0
+        total = success + failures + timeouts
+        stats[branch] = (success, failures, timeouts, total)
+    return stats
 
 class Notification:
     def __init__(self):
-        self.arch_notifications = []
-        self.package_notifications = []
+        self.arch_notifications = defaultdict(list)
+        self.package_notifications = defaultdict(list)
 
 # Calculate the list of .mk files in the Buildroot source tree, will
 # be used to guess the name of the packages that caused build
@@ -68,13 +83,13 @@ def get_notification_for_dev(notifications, dev):
 
 # Add to the notifications{} dict notifications that are related to
 # architecture "maintainers".
-def add_arch_notification(notifications, build_result):
+def add_arch_notification(branch, notifications, build_result):
     arch = build_result['arch']
     for dev in developers:
         if arch not in dev.architectures:
             continue
         n = get_notification_for_dev(notifications, dev)
-        n.arch_notifications.append(build_result)
+        n.arch_notifications[branch].append(build_result)
 
 # Given a failure reason as provided by the autobuilders, tries to
 # find the corresponding package by stripping progressively the last
@@ -106,7 +121,7 @@ def get_orphan_developer():
 
 # Add to the notifications{} dict notifications that are related to
 # package "maintainers".
-def add_package_notification(notifications, build_result):
+def add_package_notification(branch, notifications, build_result):
     pkg = find_package(build_result['reason'])
     if not pkg:
         return
@@ -116,11 +131,11 @@ def add_package_notification(notifications, build_result):
             continue
         orphan = False
         n = get_notification_for_dev(notifications, dev)
-        n.package_notifications.append(build_result)
+        n.package_notifications[branch].append(build_result)
     if orphan:
         dev = get_orphan_developer()
         n = get_notification_for_dev(notifications, dev)
-        n.package_notifications.append(build_result)
+        n.package_notifications[branch].append(build_result)
     build_result['orphan'] = orphan
 
 def show_results(results, show_status, show_orphan=False):
@@ -151,7 +166,7 @@ def show_results(results, show_status, show_orphan=False):
     return contents
 
 # Send the e-mails to the individual developers
-def developers_email(smtp, notifications, datestr, dry_run):
+def developers_email(smtp, branches, notifications, datestr, dry_run):
     for k, v in notifications.iteritems():
         to = k.name
         email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
@@ -160,14 +175,33 @@ def developers_email(smtp, notifications, datestr, dry_run):
         contents += textwrap.fill("This is the list of Buildroot build failures that occured on %s, and for which you are a registered architecture developer or package developer. Please help us improving the quality of Buildroot by investigating those build failures and sending patches to fix them. Thanks!" % datestr)
         contents += "\n\n"
         show_orphan = k.name == ORPHAN_DEVELOPER
-        if len(v.arch_notifications) != 0:
-            contents += "Build failures related to your architectures:\n\n"
-            contents += show_results(v.arch_notifications, show_status=False, show_orphan=False)
-            contents += "\n\n"
-        if len(v.package_notifications) != 0:
-            contents += "Build failures related to your packages:\n\n"
-            contents += show_results(v.package_notifications, show_status=False, show_orphan=show_orphan)
-        contents += "\n"
+
+        for branch in branches:
+            if v.arch_notifications.has_key(branch):
+                archs = v.arch_notifications[branch]
+            else:
+                archs = []
+            if v.package_notifications.has_key(branch):
+                packages = v.package_notifications[branch]
+            else:
+                packages = []
+
+            if len(archs) == 0 and len(packages) == 0:
+                continue
+
+            contents += "Results for the '%s' branch\n" % branch
+            contents += "=========================" + "=" * len(branch) + "\n\n"
+
+            if len(archs) != 0:
+                contents += "Build failures related to your architectures:\n\n"
+                contents += show_results(archs, show_status=False, show_orphan=False)
+                contents += "\n\n"
+            if len(packages) != 0:
+                contents += "Build failures related to your packages:\n\n"
+                contents += show_results(packages, show_status=False, show_orphan=show_orphan)
+
+            contents += "\n"
+
         contents += "-- \n"
         contents += http_baseurl
         if dry_run:
@@ -186,21 +220,11 @@ def developers_email(smtp, notifications, datestr, dry_run):
             smtp.sendmail(email_from, to, msg.as_string())
             print "To: %s" % k.name
 
-# Send the global e-mail to the mailing list
-def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
-    to = "buildroot@buildroot.org"
-    email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
-    subject = "[%s] Build results for %s" % (baseurl, datestr)
-    contents = "Hello,\n\n"
-    contents += "Build statistics for %s\n" % datestr
-    contents += "================================\n\n"
-    contents += "%15s : %-3d\n" % ("successes", overall[0])
-    contents += "%15s : %-3d\n" % ("failures", overall[1])
-    contents += "%15s : %-3d\n" % ("timeouts", overall[2])
-    contents += "%15s : %-3d\n" % ("TOTAL", overall[3])
-    contents += "\n"
+def global_email_branch_result(results, results_by_reason, branch):
+    contents = "Results for branch '%s'\n" % branch
+    contents += "=====================" + "=" * len(branch) + "\n\n"
     contents += "Classification of failures by reason\n"
-    contents += "====================================\n\n"
+    contents += "------------------------------------\n\n"
     for r in results_by_reason:
         reason = r['reason']
         if len(reason) > 30:
@@ -209,8 +233,30 @@ def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
         contents += "%30s | %-2d\n" % (reason, count)
     contents += "\n\n"
     contents += "Detail of failures\n"
-    contents += "===================\n\n"
+    contents += "------------------\n\n"
     contents += show_results(results, show_status=True, show_orphan=True)
+    contents += "\n"
+    return contents
+
+# Send the global e-mail to the mailing list
+def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
+    to = "buildroot@buildroot.org"
+    email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
+    subject = "[%s] Build results for %s" % (baseurl, datestr)
+    contents = "Hello,\n\n"
+    contents += "Build statistics for %s\n" % datestr
+    contents += "===============================\n\n"
+    contents += "      branch |  OK | NOK | TIM | TOT |\n"
+    for branch, stats in overall.iteritems():
+        if stats[3] == 0:
+            continue
+        contents += "  %10s | %3d | %3d | %3d | %3d |\n" % \
+                    (branch, stats[0], stats[1], stats[2], stats[3])
+    contents += "\n"
+    for branch in results.keys():
+        if len(results[branch]) == 0:
+            continue
+        contents += global_email_branch_result(results[branch], results_by_reason[branch], branch)
     contents += "\n"
     contents += "-- \n"
     contents += http_baseurl
@@ -231,43 +277,52 @@ def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
         print "To: buildroot@buildroot.net"
 
 # Get the list of build failures for the past day
-def get_build_results(db, datestr):
-    db.query("""select * from results
-    where date(builddate) = '%s' and status != 0 and branch = 'master' order by reason""" % datestr)
-    r = db.use_result()
-    return r.fetch_row(how=1, maxrows=0)
+def get_build_results(db, datestr, branches):
+    results = {}
+    for branch in branches:
+        db.query("""select * from results
+        where date(builddate) = '%s' and status != 0 and branch = '%s' order by reason""" % \
+                 (datestr, branch))
+        r = db.use_result()
+        results[branch] = r.fetch_row(how=1, maxrows=0)
+    return results
 
-def get_build_results_grouped_by_reason(db, datestr):
-    db.query("""select reason,count(id) as reason_count from results
-    where date(builddate) = '%s' and status != 0 and branch = 'master'
-    group by reason order by reason_count desc, reason""" % datestr)
-    r = db.use_result()
-    return r.fetch_row(how=1, maxrows=0)
+def get_build_results_grouped_by_reason(db, datestr, branches):
+    results_by_reason = {}
+    for branch in branches:
+        db.query("""select reason,count(id) as reason_count from results
+        where date(builddate) = '%s' and status != 0 and branch = '%s'
+        group by reason order by reason_count desc, reason""" % (datestr, branch))
+        r = db.use_result()
+        results_by_reason[branch] = r.fetch_row(how=1, maxrows=0)
+    return results_by_reason
 
 # Prepare the notifications{} dict for the notifications to individual
 # developers, based on architecture developers and package
 # developers
 def calculate_notifications(results):
     notifications = {}
-    for result in results:
-        status = int(result['status'])
-        if status != 1:
-            continue
-        add_arch_notification(notifications, result)
-        add_package_notification(notifications, result)
+    for branch in results.keys():
+        for result in results[branch]:
+            status = int(result['status'])
+            if status != 1:
+                continue
+            add_arch_notification(branch, notifications, result)
+            add_package_notification(branch, notifications, result)
     return notifications
 
 def __main__():
     yesterday = date.today() - timedelta(1)
     yesterday_str = yesterday.strftime('%Y-%m-%d')
+    branches = get_branches()
 
     db = _mysql.connect(host=localconfig.host,
                         user=localconfig.user,
                         passwd=localconfig.passwd,
                         db=localconfig.db)
-    (success, failures, timeouts, total) = get_overall_stats(db, yesterday_str)
-    results = get_build_results(db, yesterday_str)
-    results_by_reason = get_build_results_grouped_by_reason(db, yesterday_str)
+    overall_stats = get_overall_stats(db, yesterday_str, branches)
+    results = get_build_results(db, yesterday_str, branches)
+    results_by_reason = get_build_results_grouped_by_reason(db, yesterday_str, branches)
     notifications = calculate_notifications(results)
     dry_run = False
     if len(sys.argv) == 2 and sys.argv[1] == "--dry-run":
@@ -275,9 +330,9 @@ def __main__():
     smtp = smtplib.SMTP(localconfig.smtphost, localconfig.smtpport)
     smtp.starttls()
     smtp.login(localconfig.smtpuser, localconfig.smtppass)
-    developers_email(smtp, notifications, yesterday_str, dry_run)
+    developers_email(smtp, branches, notifications, yesterday_str, dry_run)
     global_email(smtp, results, results_by_reason, yesterday_str,
-                 (success, failures, timeouts, total), dry_run)
+                 overall_stats, dry_run)
     smtp.quit()
 
 __main__()
