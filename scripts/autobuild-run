@@ -717,6 +717,11 @@ def main():
     if not sysinfo.check_requirements():
         sys.exit(1)
 
+    # Enforce the sanest umask here, to avoid buildroot doing it on its
+    # own and causing a double-make call, thus adding extraneous lines
+    # in case of failures.
+    os.umask(0022)
+
     def sigterm_handler(signum, frame):
         """Kill all children"""
 
