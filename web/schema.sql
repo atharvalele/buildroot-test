@@ -11,6 +11,7 @@ CREATE TABLE `results` (
   `static` tinyint(1) NOT NULL default '0',
   `subarch` varchar(64) NOT NULL DEFAULT '',
   `duration` int(11) NOT NULL DEFAULT '0',
+  `branch` varchar(64) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
