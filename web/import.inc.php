@@ -234,8 +234,15 @@ function import_result($buildid, $filename)
 	exec("tail -3 " . $thisbuildfinaldir . "build-end.log | grep -v '\[_all\]' | grep 'make.*: \*\*\*' | sed 's,.*\[\([^\]*\)\] Error.*,\\1,' | sed 's,.*/build/\([^/]*\)/.*,\\1,'", $tmp);
 	if (trim($tmp[0]))
 	  $reason = $tmp[0];
-	else
-	  $reason = "unknown";
+	else {
+	  exec("tail -1 " . $thisbuildfinaldir . "build-time.log | grep :start: | cut -d':' -f4", $tmp);
+	  if (trim($tmp[0])) {
+	    print "Using build-time.log for reason[".trim($tmp[0])."]";
+	    $reason = trim($tmp[0]);
+	  } else {
+	    $reason = "unknown";
+	  }
+	}
     }
 
     $db = new db();
