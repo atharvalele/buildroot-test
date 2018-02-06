@@ -236,12 +236,10 @@ function import_result($buildid, $filename)
 	  $reason = $tmp[0];
 	else {
 	  exec("tail -1 " . $thisbuildfinaldir . "build-time.log | grep :start: | cut -d':' -f4", $tmp);
-	  if (trim($tmp[0])) {
-	    print "Using build-time.log for reason[".trim($tmp[0])."]";
+	  if (trim($tmp[0]))
 	    $reason = trim($tmp[0]);
-	  } else {
+	  else
 	    $reason = "unknown";
-	  }
 	}
     }
 
