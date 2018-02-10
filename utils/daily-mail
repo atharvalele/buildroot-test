@@ -169,7 +169,7 @@ def show_results(results, show_status, show_orphan=False):
 def developers_email(smtp, branches, notifications, datestr, dry_run):
     for k, v in notifications.iteritems():
         to = k.name
-        email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
+        email_from = localconfig.fromaddr
         subject = "[%s] Your build results for %s" % (baseurl, datestr)
         contents = "Hello,\n\n"
         contents += textwrap.fill("This is the list of Buildroot build failures that occured on %s, and for which you are a registered architecture developer or package developer. Please help us improving the quality of Buildroot by investigating those build failures and sending patches to fix them. Thanks!" % datestr)
@@ -241,7 +241,7 @@ def global_email_branch_result(results, results_by_reason, branch):
 # Send the global e-mail to the mailing list
 def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
     to = "buildroot@buildroot.org"
-    email_from = "Thomas Petazzoni <thomas.petazzoni@free-electrons.com>"
+    email_from = localconfig.fromaddr
     subject = "[%s] Build results for %s" % (baseurl, datestr)
     contents = "Hello,\n\n"
     contents += "Build statistics for %s\n" % datestr
