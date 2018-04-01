@@ -61,7 +61,7 @@ function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="
   if ($filter_arch != "")
     $where_parts[] = " arch=" . $db->quote_smart($filter_arch) . " ";
   if ($filter_reason != '')
-    $where_parts[] = " reason=" . $db->quote_smart($filter_reason) . " ";
+    $where_parts[] = " reason like " . $db->quote_smart($filter_reason) . " ";
   if ($filter_submitter != '')
     $where_parts[] = " submitter=" . $db->quote_smart($filter_submitter) . " ";
   if ($filter_libc != '')

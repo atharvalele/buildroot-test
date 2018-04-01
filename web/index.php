@@ -58,7 +58,7 @@ if (isset($_GET['branch']) && preg_match("/^[a-z0-9_\.]*$/", $_GET['branch']))
 else
   $filter_branch = "";
 
-if (isset($_GET['reason']) && preg_match("/^[A-Za-z0-9_\+\.\-]*$/", $_GET['reason']))
+if (isset($_GET['reason']) && preg_match("/^[A-Za-z0-9_%\+\.\-]*$/", $_GET['reason']))
   $filter_reason = $_GET['reason'];
 else
   $filter_reason = "";
