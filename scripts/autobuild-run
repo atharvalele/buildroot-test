@@ -288,17 +288,24 @@ def prepare_build(**kwargs):
     if not os.path.exists(dldir):
         os.mkdir(dldir)
 
+    # recursively find files under root
+    def find_files(root):
+        for r, d, f in os.walk(root):
+            for i in f:
+                yield os.path.join(r, i)
+
     # Remove 5 random files from the download directory. Removing
     # random files from the download directory allows to ensure we
     # regularly re-download files to check that their upstream
     # location is still correct.
     for i in range(0, 5):
-        flist = os.listdir(dldir)
+        flist = list(find_files(dldir))
         if not flist:
             break
         f = flist[randint(0, len(flist) - 1)]
-        log_write(log, "INFO: removing %s from downloads" % f)
-        os.remove(os.path.join(dldir, f))
+        log_write(log, "INFO: removing %s from downloads" %
+                  os.path.relpath(f, dldir))
+        os.remove(f)
 
     branch = get_branch()
     log_write(log, "INFO: testing branch '%s'" % branch)
