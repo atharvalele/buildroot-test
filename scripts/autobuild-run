@@ -291,6 +291,13 @@ def prepare_build(**kwargs):
     # recursively find files under root
     def find_files(root):
         for r, d, f in os.walk(root):
+            # do not remove individual files from git caches. 'git' can
+            # be either dl/<package>/git or dl/git and we want to
+            # eventually remove tarballs for the git package, so check
+            # for '.git' instead to match only dl/<package>/git/.git .
+            if '.git' in d:
+                del d[:]
+                continue
             for i in f:
                 yield os.path.join(r, i)
 
