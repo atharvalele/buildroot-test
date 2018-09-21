@@ -1,7 +1,7 @@
 CREATE TABLE `results` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `status` int(11) NOT NULL DEFAULT '0',
-  `builddate` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `builddate` datetime NOT NULL DEFAULT '1970-01-01 00:00:01',
   `submitter` varchar(255) NOT NULL DEFAULT '',
   `commitid` char(40) NOT NULL DEFAULT '',
   `identifier` char(40) NOT NULL DEFAULT '',
