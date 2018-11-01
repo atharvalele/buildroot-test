@@ -23,6 +23,8 @@ function format_duration($seconds_count)
         return "$hours$minutes$seconds";
 }
 
+$filters = array();
+
 /* When no start is given, or start is a crazy value (not an integer),
    just default to start=0 */
 if (! isset($_GET['start']) || ! preg_match("/^[0-9]*$/", $_GET['start']))
@@ -38,50 +40,31 @@ else
 if ($step > 250)
   $step = 250;
 
-$filter_status = -1;
-if (isset ($_GET['status'])) {
-  if ($_GET['status'] == 'OK')
-    $filter_status = 0;
-  else if ($_GET['status'] == 'NOK')
-    $filter_status = 1;
-  else if ($_GET['status'] == 'TIMEOUT')
-    $filter_status = 2;
-}
+$valid_status = array("OK", "NOK", "TIMEOUT");
+
+if (isset ($_GET['status']) && in_array($_GET['status'], $valid_status))
+  $filters["status"] = $_GET['status'];
 
 if (isset($_GET['arch']) && preg_match("/^[a-z0-9_]*$/", $_GET['arch']))
-  $filter_arch = $_GET['arch'];
-else
-  $filter_arch = "";
+  $filters["arch"] = $_GET['arch'];
 
 if (isset($_GET['branch']) && preg_match("/^[a-z0-9_\.]*$/", $_GET['branch']))
-  $filter_branch = $_GET['branch'];
-else
-  $filter_branch = "";
+  $filters["branch"] = $_GET['branch'];
 
 if (isset($_GET['reason']) && preg_match("/^[A-Za-z0-9_%\+\.\-]*$/", $_GET['reason']))
-  $filter_reason = $_GET['reason'];
-else
-  $filter_reason = "";
+  $filters["reason"] = $_GET['reason'];
 
 if (isset($_GET['libc']) && preg_match("/^[a-z]*$/", $_GET['libc']))
-  $filter_libc = $_GET['libc'];
-else
-  $filter_libc = "";
+  $filters["libc"] = $_GET['libc'];
 
 if (isset($_GET['static']) && preg_match("/^[0-1]$/", $_GET['static']))
-  $filter_static = $_GET['static'];
-else
-  $filter_static = "";
+  $filters["static"] = $_GET['static'];
 
 if (isset($_GET['subarch']) && preg_match("/^[A-Za-z0-9_\+\.\-]*$/", $_GET['subarch']))
-  $filter_subarch = $_GET['subarch'];
-else
-  $filter_subarch = "";
+  $filters["subarch"] = $_GET['subarch'];
 
 if (isset ($_GET['submitter']))
-  $filter_submitter = urldecode($_GET['submitter']);
-else
-  $filter_submitter = "";
+  $filters["submitter"] = urldecode($_GET['submitter']);
 
 bab_header("Buildroot tests");
 
@@ -91,7 +74,7 @@ echo "<tr class=\"header\">";
 echo "<td>Date</td><td>Duration</td><td>Status</td><td>Commit ID</td><td>Submitter</td><td>Arch/Subarch</td><td>Failure reason</td><td>Libc</td><td>Static?</td><td>Data</td>";
 echo "</tr>";
 
-$results = bab_get_results($start, $step, $filter_status, $filter_arch, $filter_reason, $filter_submitter, $filter_libc, $filter_static, $filter_subarch, $filter_branch);
+$results = bab_get_results($start, $step, $filters);
 
 while ($current = mysqli_fetch_object($results)) {
 

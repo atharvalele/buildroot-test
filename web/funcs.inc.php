@@ -47,36 +47,38 @@ function bab_total_results_count()
   return $ret[0];
 }
 
+$status_map = array(
+	"OK" => 0,
+	"NOK" => 1,
+	"TIMEOUT" => 2,
+);
+
 /*
  * Returns an array containing the build results starting from $start,
  * and limited to $count items. The items starting with $start=0 are
  * the most recent build results.
  */
-function bab_get_results($start=0, $count=100, $filter_status=-1, $filter_arch="", $filter_reason="", $filter_submitter="", $filter_libc="", $filter_static="", $filter_subarch="", $filter_branch="")
+function bab_get_results($start=0, $count=100, $filters = array())
 {
+  global $status_map;
   $db = new db();
-  $where_parts = array();
-  if ($filter_status != -1)
-    $where_parts[] = " status=" . $db->quote_smart($filter_status) . " ";
-  if ($filter_arch != "")
-    $where_parts[] = " arch=" . $db->quote_smart($filter_arch) . " ";
-  if ($filter_reason != '')
-    $where_parts[] = " reason like " . $db->quote_smart($filter_reason) . " ";
-  if ($filter_submitter != '')
-    $where_parts[] = " submitter=" . $db->quote_smart($filter_submitter) . " ";
-  if ($filter_libc != '')
-    $where_parts[] = " libc=" . $db->quote_smart($filter_libc) . " ";
-  if ($filter_static != '')
-    $where_parts[] = " static=" . $db->quote_smart($filter_static) . " ";
-  if ($filter_subarch != '')
-    $where_parts[] = " subarch=" . $db->quote_smart($filter_subarch) . " ";
-  if ($filter_branch != '')
-    $where_parts[] = " branch=" . $db->quote_smart($filter_branch) . " ";
-  if (count($where_parts)) {
-    $condition = "where " . implode("and", $where_parts);
-  } else {
-    $condition = "";
-  }
+
+  $sql_filters = implode(' and ', array_map(
+	function ($v, $k) use ($db, $status_map) {
+		if ($k == "reason")
+			return sprintf("%s like %s", $k, $db->quote_smart($v));
+		else if ($k == "status")
+			return sprintf("%s=%s", $k, $db->quote_smart($status_map[$v]));
+		else
+			return sprintf("%s=%s", $k, $db->quote_smart($v));
+	},
+	$filters,
+	array_keys($filters)
+  ));
+
+  if (count($filters))
+    $condition = "where " . $sql_filters;
+
   $sql = "select * from results $condition order by builddate desc limit $start, $count;";
   $ret = $db->query($sql);
   if ($ret == FALSE) {
