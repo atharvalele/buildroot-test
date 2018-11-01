@@ -156,7 +156,7 @@ echo "</table>\n";
 
 echo "<p style=\"text-align: center;\">";
 
-$total = bab_total_results_count();
+$total = bab_total_results_count($filters);
 
 $prev_args = $filters;
 $next_args = $filters;
@@ -168,10 +168,15 @@ $next_args["start"] = $start + $step;
 if ($start != 0)
   echo "<a href=\"?" . format_url_args($prev_args) . "\">Previous results</a>&nbsp;-&nbsp;";
 
-echo "(" . $start . " - " . ($start + $step) . " / " . $total . " results)&nbsp;-&nbsp;";
+if ($start + $step > $total)
+	$end = $total;
+else
+	$end = $start + $step;
+
+echo "(" . $start . " - " . $end . " / " . $total . " results)";
 
 if (($start + $step) < $total)
-  echo "<a href=\"?" . format_url_args($next_args) . "\">Next results</a>";
+  echo "&nbsp;-&nbsp;<a href=\"?" . format_url_args($next_args) . "\">Next results</a>";
 
 echo "</p>";
 

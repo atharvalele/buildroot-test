@@ -60,10 +60,11 @@ function bab_format_sql_filter($db, $filters)
 /*
  * Returns the total number of results.
  */
-function bab_total_results_count()
+function bab_total_results_count($filters)
 {
   $db = new db();
-  $sql = "select count(*) from results;";
+  $condition = bab_format_sql_filter($db, $filters);
+  $sql = "select count(*) from results $condition;";
   $ret = $db->query($sql);
   if ($ret == FALSE) {
     echo "Something's wrong in here\n";
