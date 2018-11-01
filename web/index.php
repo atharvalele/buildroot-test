@@ -23,6 +23,17 @@ function format_duration($seconds_count)
         return "$hours$minutes$seconds";
 }
 
+function format_url_args($args)
+{
+	return implode('&', array_map(
+		function ($v, $k) {
+			return sprintf("%s=%s", $k, $v);
+		},
+		$args,
+		array_keys($args)
+	));
+}
+
 $filters = array();
 
 /* When no start is given, or start is a crazy value (not an integer),
@@ -147,13 +158,20 @@ echo "<p style=\"text-align: center;\">";
 
 $total = bab_total_results_count();
 
+$prev_args = $filters;
+$next_args = $filters;
+$prev_args["step"] = $step;
+$next_args["step"] = $step;
+$prev_args["start"] = $start - $step;
+$next_args["start"] = $start + $step;
+
 if ($start != 0)
-  echo "<a href=\"?start=" . ($start - $step) . "\">Previous results</a>&nbsp;-&nbsp;";
+  echo "<a href=\"?" . format_url_args($prev_args) . "\">Previous results</a>&nbsp;-&nbsp;";
 
 echo "(" . $start . " - " . ($start + $step) . " / " . $total . " results)&nbsp;-&nbsp;";
 
 if (($start + $step) < $total)
-  echo "<a href=\"?start=" . ($start + $step) . "\">Next results</a>";
+  echo "<a href=\"?" . format_url_args($next_args) . "\">Next results</a>";
 
 echo "</p>";
 
