@@ -30,6 +30,33 @@ function bab_footer()
   echo "</html>\n";
 }
 
+function bab_format_sql_filter($db, $filters)
+{
+	$status_map = array(
+		"OK" => 0,
+		"NOK" => 1,
+		"TIMEOUT" => 2,
+	);
+
+	$sql_filters = implode(' and ', array_map(
+		function ($v, $k) use ($db, $status_map) {
+			if ($k == "reason")
+				return sprintf("%s like %s", $k, $db->quote_smart($v));
+			else if ($k == "status")
+				return sprintf("%s=%s", $k, $db->quote_smart($status_map[$v]));
+			else
+				return sprintf("%s=%s", $k, $db->quote_smart($v));
+		},
+		$filters,
+		array_keys($filters)
+	));
+
+	if (count($filters))
+		return "where " . $sql_filters;
+	else
+		return "";
+}
+
 /*
  * Returns the total number of results.
  */
@@ -47,12 +74,6 @@ function bab_total_results_count()
   return $ret[0];
 }
 
-$status_map = array(
-	"OK" => 0,
-	"NOK" => 1,
-	"TIMEOUT" => 2,
-);
-
 /*
  * Returns an array containing the build results starting from $start,
  * and limited to $count items. The items starting with $start=0 are
@@ -63,22 +84,7 @@ function bab_get_results($start=0, $count=100, $filters = array())
   global $status_map;
   $db = new db();
 
-  $sql_filters = implode(' and ', array_map(
-	function ($v, $k) use ($db, $status_map) {
-		if ($k == "reason")
-			return sprintf("%s like %s", $k, $db->quote_smart($v));
-		else if ($k == "status")
-			return sprintf("%s=%s", $k, $db->quote_smart($status_map[$v]));
-		else
-			return sprintf("%s=%s", $k, $db->quote_smart($v));
-	},
-	$filters,
-	array_keys($filters)
-  ));
-
-  if (count($filters))
-    $condition = "where " . $sql_filters;
-
+  $condition = bab_format_sql_filter($db, $filters);
   $sql = "select * from results $condition order by builddate desc limit $start, $count;";
   $ret = $db->query($sql);
   if ($ret == FALSE) {
