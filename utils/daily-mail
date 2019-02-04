@@ -6,6 +6,7 @@ import os
 import textwrap
 import smtplib
 from email.mime.text import MIMEText
+from email.utils import formatdate
 from datetime import date, timedelta
 import localconfig
 import csv
@@ -217,6 +218,7 @@ def developers_email(smtp, branches, notifications, datestr, dry_run):
             msg['Subject'] = subject
             msg['To'] = to
             msg['From'] = email_from
+            msg['Date'] = formatdate()
             smtp.sendmail(email_from, to, msg.as_string())
             print "To: %s" % k.name
 
@@ -273,6 +275,7 @@ def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
         msg['Subject'] = subject
         msg['To'] = to
         msg['From'] = email_from
+        msg['Date'] = formatdate()
         smtp.sendmail(email_from, [to], msg.as_string())
         print "To: buildroot@buildroot.net"
 
