@@ -249,7 +249,8 @@ def global_email(smtp, results, results_by_reason, datestr, overall, dry_run):
     contents += "Build statistics for %s\n" % datestr
     contents += "===============================\n\n"
     contents += "      branch |  OK | NOK | TIM | TOT |\n"
-    for branch, stats in overall.iteritems():
+    for branch in sorted(overall.iterkeys()):
+        stats = overall[branch]
         if stats[3] == 0:
             continue
         contents += "  %10s | %3d | %3d | %3d | %3d |\n" % \
