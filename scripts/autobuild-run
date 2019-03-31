@@ -478,12 +478,14 @@ def send_results(result, **kwargs):
                     os.path.join(resultdir, "defconfig"))
     shutil.copyfile(os.path.join(outputdir, "branch"),
                     os.path.join(resultdir, "branch"))
-    if os.path.exists(os.path.join(outputdir, "build", "build-time.log")):
-        shutil.copyfile(os.path.join(outputdir, "build", "build-time.log"),
-                        os.path.join(resultdir, "build-time.log"))
-    if os.path.exists(os.path.join(outputdir, "legal-info", "manifest.csv")):
-        shutil.copyfile(os.path.join(outputdir, "legal-info", "manifest.csv"),
-                        os.path.join(resultdir, "licenses-manifest.csv"))
+
+    def copy_if_exists(dir, src, dst=None):
+        if os.path.exists(os.path.join(outputdir, d, src)):
+            shutil.copyfile(os.path.join(outputdir, d, src),
+                            os.path.join(resultdir, src if dst is None else dst))
+
+    copy_if_exists("build", "build-time.log")
+    copy_if_exists("legal-info", "manifest.csv", "licenses-manifest.csv")
 
     subprocess.call(["git log -n 1 --pretty=format:%%H > %s" % \
                      os.path.join(resultdir, "gitid")],
