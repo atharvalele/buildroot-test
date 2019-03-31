@@ -485,6 +485,9 @@ def send_results(result, **kwargs):
                             os.path.join(resultdir, src if dst is None else dst))
 
     copy_if_exists("build", "build-time.log")
+    copy_if_exists("build", "packages-file-list.txt")
+    copy_if_exists("build", "packages-file-list-host.txt")
+    copy_if_exists("build", "packages-file-list-staging.txt")
     copy_if_exists("legal-info", "manifest.csv", "licenses-manifest.csv")
 
     subprocess.call(["git log -n 1 --pretty=format:%%H > %s" % \
