@@ -479,9 +479,9 @@ def send_results(result, **kwargs):
     shutil.copyfile(os.path.join(outputdir, "branch"),
                     os.path.join(resultdir, "branch"))
 
-    def copy_if_exists(dir, src, dst=None):
-        if os.path.exists(os.path.join(outputdir, d, src)):
-            shutil.copyfile(os.path.join(outputdir, d, src),
+    def copy_if_exists(directory, src, dst=None):
+        if os.path.exists(os.path.join(outputdir, directory, src)):
+            shutil.copyfile(os.path.join(outputdir, directory, src),
                             os.path.join(resultdir, src if dst is None else dst))
 
     copy_if_exists("build", "build-time.log")
