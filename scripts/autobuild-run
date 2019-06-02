@@ -394,6 +394,32 @@ def stop_on_build_hang(monitor_thread_hung_build_flag,
                 break
         monitor_thread_stop_flag.wait(30)
 
+def check_reproducibility(**kwargs):
+    """Check reproducibility of builds
+
+    Use cmp on the built images, if difference is detected we run
+    diffoscope to see where the differences lie
+    """
+
+    log = kwargs['log']
+    idir = "instance-%d" % kwargs['instance']
+    outputdir = os.path.join(idir, "output")
+    diffoscope_output = os.path.join(outputdir, "diffoscope-results.txt")
+    # Using only tar images for now
+    build_1_image = os.path.join(outputdir, "images-1", "rootfs.tar")
+    build_2_image = os.path.join(outputdir, "images", "rootfs.tar")
+
+    ret = subprocess.call(["cmp", "build_1_image", "build_2_image"])
+    if ret == 0:
+        # rootfs images match byte-for-byte -> reproducible image
+        log_write(log, "INFO: Build is reproducible!")
+        return 0
+    else:
+        log_write(log, "INFO: Build is non-reproducible, running diffoscope")
+        subprocess.call(["diffoscope", build_1_image, build_2_image,
+                        "--text", diffoscope_output,])
+        return -1
+
 def do_build(**kwargs):
     """Run the build itself"""
 
