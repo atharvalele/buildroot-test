@@ -455,6 +455,49 @@ def do_build(**kwargs):
     log_write(log, "INFO: build successful")
     return 0
 
+def do_reproducible_build(**kwargs):
+    """Run the builds for reproducibility testing
+
+    Build twice with the same configuration. Calls do_build() to
+    perform the actual build.
+    """
+
+    idir = "instance-%d" % kwargs['instance']
+    outputdir = os.path.join(idir, "output")
+    log = kwargs['log']
+    
+    # Start the first build
+    log_write(log, "INFO: Reproducible Build Test, starting build 1")
+    ret = do_build(**kwargs)
+    if ret != 0:
+        log_write(log, "INFO: build 1 failed, skipping build 2")
+        return ret
+    
+    # First build has been built, move files and start build 2
+    images = os.path.join(outputdir, "images")
+    target = os.path.join(outputdir, "target")
+    build_1_images = os.path.join(outputdir, "images-1")
+    build_1_target = os.path.join(outputdir, "target-1")
+    os.mkdir(build_1_images)
+    os.mkdir(build_1_target)
+    subprocess.call(["mv", images, build_1_images])
+    subprocess.call(["mv", target, build_1_target])
+
+    # Clean up build 1
+    cmd = ["make", "O=%s" % outputdir, "-C", srcdir, "clean"] \
+          + kwargs['make_opts'].split()
+
+    # Start the second build
+    log_write(log, "INFO: Reproducible Build Test, starting build 2")
+    ret = do_build(**kwargs)
+    if ret != 0:
+        log_write(log, "INFO: build 2 failed")
+        return ret
+
+    # Assuming both have built successfully
+    ret = check_reproducibility()
+    return ret
+
 def send_results(result, **kwargs):
     """Prepare and store/send tarball with results
 
